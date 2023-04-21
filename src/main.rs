@@ -76,15 +76,9 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> Result<(), Er
         match msg {
             Ok(Message::Text(text)) => {
                 println!("Get Message: {}", text);
-                let message = {
-                    if text == "read_time" {
-                        let tick = game_state.tick.read().unwrap();
-                        let (year, month, day) = tick.datetime();
-                        format!("{}年{}月{}日", year, month, day)
-                    }else{
-                        text
-                    }
-                };
+
+                let message = game::command_executor(&game_state, &text).await;
+                println!("Result message: {}", message);
 
                 ws_stream
                     .send(Message::Text(format!("{}", message)))

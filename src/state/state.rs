@@ -5,12 +5,14 @@ use crate::state::tick::Tick;
 
 #[derive(Debug)]
 pub struct GameState{
+    pub pause: RwLock<bool>,    
     pub tick: RwLock<Tick>
 }
 
 impl GameState{
     pub fn new() -> Self {
         Self {
+            pause: RwLock::new(true),
             tick: RwLock::new(Tick::new())
         }
     }
