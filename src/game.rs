@@ -11,7 +11,7 @@ pub async fn game_loop(game_state: &GameState) {
 
 pub async fn command_executor(game_state: &GameState, cmd: &str) -> String {
     match cmd {
-        "read_time" => {
+        "date" => {
             let tick = game_state.tick.read().unwrap();
             let (year, month, day) = tick.datetime();
 

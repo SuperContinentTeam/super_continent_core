@@ -10,11 +10,18 @@ use tokio_tungstenite::{
     accept_async,
     tungstenite::{protocol::Message, Error, Result},
 };
+use dotenv::dotenv;
 
 mod game;
+mod redis_client;
+
 mod state {
     pub mod state;
     pub mod tick;
+}
+
+mod room {
+    pub mod room;
 }
 
 use state::state::GameState;
@@ -23,6 +30,8 @@ static GAME_STATE: OnceCell<GameState> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+
     let addr: SocketAddr = "0.0.0.0:55555".parse().unwrap();
     let listener = TcpListener::bind(&addr).await.expect("Can't listen");
     println!("Listening on: {}", addr);
