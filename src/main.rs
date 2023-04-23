@@ -1,5 +1,4 @@
 use futures_util::{SinkExt, StreamExt};
-use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
 use std::thread;
 use tokio::{
@@ -11,6 +10,7 @@ use tokio_tungstenite::{
     tungstenite::{protocol::Message, Error, Result},
 };
 use dotenv::dotenv;
+use crate::state::state::get_game_state;
 
 mod game;
 mod redis_client;
@@ -24,9 +24,6 @@ mod room {
     pub mod room;
 }
 
-use state::state::GameState;
-
-static GAME_STATE: OnceCell<GameState> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
@@ -36,14 +33,10 @@ async fn main() {
     let listener = TcpListener::bind(&addr).await.expect("Can't listen");
     println!("Listening on: {}", addr);
 
-    // Global Game State
-    let game_state = GameState::new();
-    GAME_STATE.set(game_state).unwrap();
-
     // Game Main Loop
     let _ = thread::spawn(move || {
         let rt = Runtime::new().unwrap();
-        rt.block_on(game::game_loop(GAME_STATE.get().unwrap()));
+        rt.block_on(game::game_loop(get_game_state()));
     });
 
     // WebSocket Server
@@ -79,14 +72,12 @@ async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> Result<(), Er
 
     println!("New WebSocket connection: {}", peer);
 
-    let game_state = GAME_STATE.get().unwrap();
-
     while let Some(msg) = ws_stream.next().await {
         match msg {
             Ok(Message::Text(text)) => {
                 println!("Get Message: {}", text);
 
-                let message = game::command_executor(&game_state, &text).await;
+                let message = game::command_executor(get_game_state(), &text).await;
                 println!("Result message: {}", message);
 
                 ws_stream

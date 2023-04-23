@@ -1,6 +1,7 @@
 use std::collections::HashMap;
+use serde::{Serialize, Deserialize};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Player {
     pub name: String,
     pub entity: String,
@@ -17,7 +18,7 @@ impl Player {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Room {
     pub name: String,
     pub entity: String,
@@ -35,7 +36,8 @@ impl Room {
 
     pub fn join(&mut self, mut player: Player) {
         if !self.users.contains_key(player.entity.as_str()) {
-            self.users.insert(player.entity, player.clone());
+            let entity = player.entity.clone();
+            self.users.insert(entity, player.clone());
             player.room_entity = Some(self.entity.clone());
         }
     }
