@@ -108,6 +108,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "futures-channel"
+version = "0.3.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "955518d47e09b25bbebc7a18df10b81f0c766eaf4c4f1cccef2fca5f2a4fb5f2"
+dependencies = [
+ "futures-core",
+]
+
+[[package]]
 name = "futures-core"
 version = "0.3.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -496,6 +505,7 @@ name = "super_continent_core"
 version = "0.1.0"
 dependencies = [
  "dotenv",
+ "futures-channel",
  "futures-util",
  "lazy_static",
  "once_cell",

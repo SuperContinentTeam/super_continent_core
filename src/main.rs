@@ -49,6 +49,7 @@ async fn main() {
     // });
 
     // WebSocket Server
+    connections::initial_peer_map();
     let websocket_server = thread::spawn(move || {
         let rt = Runtime::new().unwrap();
         rt.block_on(connections::connect_from_client(listener));
