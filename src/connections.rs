@@ -33,7 +33,7 @@ pub async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> Result<()
 
     let incoming_future = incoming.try_for_each(|msg| {
         let text = msg.to_text().unwrap();
-        println!("Received a message from {}: {}", peer, text);        
+        println!("Received a message from {}: {}", peer, text);
         let message = Message::Text(format!("{}: {}", &peer, text));
 
         let peer_map_guard = peer_map.lock().unwrap();
@@ -82,13 +82,21 @@ pub async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> Result<()
     Ok(())
 }
 
-pub async fn connect_from_client(listener: TcpListener) {
-    while let Ok((stream, _)) = listener.accept().await {
-        let peer = stream
-            .peer_addr()
-            .expect("connected streams should have a peer address");
-        println!("Peer address: {}", peer);
-        tokio::spawn(accept_connection(peer, stream));
+pub async fn connect_from_client(running: Arc<Mutex<bool>>) {
+    let addr: SocketAddr = "0.0.0.0:55555".parse().unwrap();
+    let listener = TcpListener::bind(&addr).await.expect("Can't listen");
+    println!("Listening on: {}", addr);
+
+    while *running.lock().unwrap() {
+        match listener.accept().await {
+            Ok((stream, peer)) => {
+                println!("Peer address: {}", peer);
+                tokio::spawn(accept_connection(peer, stream));
+            }
+            Err(_) => {
+                eprintln!("connected streams should have a peer address");
+            }
+        }
     }
 }
 
