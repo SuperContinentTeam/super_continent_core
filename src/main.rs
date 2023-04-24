@@ -1,8 +1,7 @@
-use std::{net::SocketAddr, thread};
-use std::sync::{Arc, Mutex};
-use tokio::runtime::Runtime;
+use std::net::SocketAddr;
+
 use dotenv::dotenv;
-// use crate::state::state::get_game_state;
+use tokio::net::TcpListener;
 
 mod game;
 mod redis_client;
@@ -23,24 +22,21 @@ mod queue;
 async fn main() {
     dotenv().ok();
 
-    let running = Arc::new(Mutex::new(true));
-
-    // Game Main Loop
-    // let _ = thread::spawn(move || {
-    //     let rt = Runtime::new().unwrap();
-    //     rt.block_on(game::game_loop(get_game_state()));
-    // });
+    connections::initial_peer_map();
+    let addr: SocketAddr = "0.0.0.0:55555".parse().unwrap();
+    let listener = TcpListener::bind(&addr).await.expect("Can't listen");
+    println!("Listening on: {}", addr);
 
     // WebSocket Server
-    let running_websocket_server = Arc::clone(&running);
-    connections::initial_peer_map();
-    let websocket_server = thread::spawn(move || {
-        let rt = Runtime::new().unwrap();
-        rt.block_on(connections::connect_from_client(running_websocket_server));
-    });
-
-    websocket_server.join().unwrap();
+    loop {
+        match listener.accept().await {
+            Ok((stream, peer)) => {
+                println!("Peer address: {}", peer);
+                tokio::spawn(connections::accept_connection(peer, stream));
+            }
+            Err(_) => {
+                eprintln!("connected streams should have a peer address");
+            }
+        }
+    }
 }
-
-
-

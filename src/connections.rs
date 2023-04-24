@@ -1,5 +1,5 @@
 use futures_channel::mpsc::{unbounded, UnboundedSender};
-use futures_util::{StreamExt, TryStreamExt, future, pin_mut};
+use futures_util::{future, pin_mut, StreamExt, TryStreamExt};
 use once_cell::sync::OnceCell;
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -50,7 +50,6 @@ pub async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> Result<()
     pin_mut!(incoming_future, outgoing_future);
     future::select(incoming_future, outgoing_future).await;
 
-
     println!("{} disconnected", &peer);
     PEER_MAP.get().unwrap().lock().unwrap().remove(&peer);
 
@@ -80,24 +79,6 @@ pub async fn handle_connection(peer: SocketAddr, stream: TcpStream) -> Result<()
     // }
 
     Ok(())
-}
-
-pub async fn connect_from_client(running: Arc<Mutex<bool>>) {
-    let addr: SocketAddr = "0.0.0.0:55555".parse().unwrap();
-    let listener = TcpListener::bind(&addr).await.expect("Can't listen");
-    println!("Listening on: {}", addr);
-
-    while *running.lock().unwrap() {
-        match listener.accept().await {
-            Ok((stream, peer)) => {
-                println!("Peer address: {}", peer);
-                tokio::spawn(accept_connection(peer, stream));
-            }
-            Err(_) => {
-                eprintln!("connected streams should have a peer address");
-            }
-        }
-    }
 }
 
 pub async fn accept_connection(peer: SocketAddr, stream: TcpStream) {
