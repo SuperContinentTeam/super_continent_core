@@ -1,4 +1,4 @@
-fn divmod(dividend: i32, divisor: i32) -> (i32, i32) {
+pub fn divmod(dividend: i32, divisor: i32) -> (i32, i32) {
     let quotient = dividend / divisor;
     let remainder = dividend % divisor;
     (quotient, remainder)

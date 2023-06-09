@@ -4,16 +4,16 @@ use dotenv::dotenv;
 use tokio::net::TcpListener;
 
 mod game;
-mod redis_client;
+// mod redis_client;
 
 mod state {
     pub mod state;
     pub mod tick;
 }
 
-mod room {
-    pub mod room;
-}
+// mod room {
+//     pub mod room;
+// }
 
 mod connections;
 mod queue;
