@@ -24,6 +24,22 @@ impl GameState {
         let mut tick = self.tick.write().unwrap();
         tick.value += 1;
     }
+
+    pub async fn run(&self) {
+        loop {
+            if !*self.pause.read().unwrap() {
+                self.time_flow();
+            }
+
+            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        }
+    }
+
+    pub fn to_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "tick": self.tick.read().unwrap().value
+        })
+    }
 }
 
 pub fn get_game_state(name: String) -> Arc<GameState> {
@@ -37,5 +53,13 @@ pub fn get_game_state(name: String) -> Arc<GameState> {
             arc_gs.clone()
         }
         Some(gs) => gs.clone(),
+    }
+}
+
+pub fn remove_game_state(name: String) {
+    let mut map = GAME_STATE_MAP.lock().unwrap();
+
+    if map.get(name.as_str()).is_some() {
+        map.remove(name.as_str());
     }
 }
