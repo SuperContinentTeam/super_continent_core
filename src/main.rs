@@ -35,7 +35,7 @@ fn handle_socket(mut stream: TcpStream) {
                 // 将接收到的数据拼接到已接收数据的末尾
                 received_data.push_str(&data);
                 if received_data.ends_with("\n") {
-                    println!("接收信息为: {}", received_data);
+                    println!("接收信息为: {:#?}", parse_data(received_data.clone()));
                     received_data.clear();
                 }
 
@@ -51,4 +51,9 @@ fn handle_socket(mut stream: TcpStream) {
             }
         }
     }
+}
+
+fn parse_data(message: String) -> serde_json::Value {
+    let msg = message.trim_end();
+    serde_json::from_str(msg).unwrap()
 }
