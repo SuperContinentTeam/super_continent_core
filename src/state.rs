@@ -47,7 +47,7 @@ impl State {
         Self {
             name,
             tick: 0,
-            pause: false,
+            pause: true,
         }
     }
 }
