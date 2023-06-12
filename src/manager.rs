@@ -1,63 +1,43 @@
-use std::collections::HashMap;
-use std::io::Write;
-use std::net::TcpStream;
+use lazy_static::lazy_static;
+use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 
-#[allow(dead_code)]
-pub fn fix_message(text: &[u8]) -> Vec<u8> {
-    let mut message = text.to_owned();
-    if let Some(last) = text.last() {
-        // '\n'的u8形式=10
-        if *last != 10 {
-            message.push(10);
-        }
-    }
-    message
+lazy_static! {
+    static ref TCP_QUEUE: Arc<Mutex<VecDeque<serde_json::Value>>> =
+        Arc::new(Mutex::new(VecDeque::new()));
+    static ref MSG_QUEUE: Arc<Mutex<VecDeque<serde_json::Value>>> =
+        Arc::new(Mutex::new(VecDeque::new()));
+    // static ref STATE_MAP: HashMap<String, u8> = HashMap::new();
+    static ref RELATION: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
 }
 
-pub struct TcpManager {
-    pub peer_map: Arc<Mutex<HashMap<String, Arc<Mutex<TcpStream>>>>>,
+pub fn tcp_manager_run() {
+    println!("启动通信监听线程...");
+    let mut tick = 1;
+    let tcp_queue_clone = TCP_QUEUE.clone();
+
+    thread::spawn(move || loop {
+        if let Some(tcp_message) = tcp_queue_clone.lock().unwrap().pop_front() {
+            println!("{}", tcp_message);
+        }
+        println!("通信运行时间: {}s", tick);
+        tick += 1;
+        thread::sleep(Duration::from_secs(1))
+    });
 }
 
-impl TcpManager {
-    pub fn new() -> Self {
-        Self {
-            peer_map: Arc::new(Mutex::new(HashMap::new())),
+pub fn state_manager_run() {
+    println!("启动状态更新线程...");
+    let mut tick = 1;
+    let msg_queue_clone = MSG_QUEUE.clone();
+    thread::spawn(move || loop {
+        if let Some(msg_value) = msg_queue_clone.lock().unwrap().pop_front() {
+            println!("{}", msg_value);
         }
-    }
-
-    pub fn insert(&self, addr: String, ax_stream: Arc<Mutex<TcpStream>>) {
-        self.peer_map
-            .clone()
-            .lock()
-            .unwrap()
-            .insert(addr, ax_stream.clone());
-    }
-
-    pub fn send_message(&self, addr: String, text: &[u8]) {
-        match self.peer_map.clone().lock().unwrap().get_mut(&addr) {
-            Some(ax_stream) => {
-                let _ = ax_stream
-                    .clone()
-                    .lock()
-                    .unwrap()
-                    .write_all(&fix_message(text));
-            }
-            None => (),
-        }
-    }
-
-    pub fn broadcast(&self, text: &[u8]) {
-        let temp = &fix_message(text);
-        for (peer, ax_stream) in self.peer_map.clone().lock().unwrap().iter() {
-            let mut message: Vec<u8> = Vec::new();
-            message.extend_from_slice(format!("{}: ", peer).as_bytes());
-            message.extend_from_slice(temp);
-            let _ = ax_stream.clone().lock().unwrap().write_all(&message);
-        }
-    }
-
-    pub fn remove(&self, addr: String) {
-        self.peer_map.clone().lock().unwrap().remove(&addr);
-    }
+        println!("状态更新时间: {}s", tick);
+        tick += 1;
+        thread::sleep(Duration::from_secs(1));
+    });
 }

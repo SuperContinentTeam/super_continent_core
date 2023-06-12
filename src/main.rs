@@ -1,27 +1,16 @@
 mod manager;
-mod state;
+mod tcp_manager;
 
-use lazy_static::lazy_static;
-use manager::TcpManager;
-use state::StateManager;
 use std::io::Read;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-lazy_static! {
-    static ref TCP_MANAGER: TcpManager = TcpManager::new();
-    static ref STATE_MANAGER: StateManager = StateManager::new();
-}
-
 fn main() {
     let listener = TcpListener::bind("0.0.0.0:55555").unwrap();
     println!("Listening 0.0.0.0:55555...");
-
-    // 创建一个本地State
-    STATE_MANAGER.create_state("localhost".to_string());
-    // 启动这个State
-    STATE_MANAGER.start("localhost".to_string());
+    manager::tcp_manager_run();
+    manager::state_manager_run();
 
     for stream in listener.incoming() {
         match stream {
@@ -31,7 +20,7 @@ fn main() {
                 let arc_mutex_stream: Arc<Mutex<TcpStream>> = Arc::new(Mutex::new(s));
                 let peer_addr = addr.clone();
                 // 保存线程对象
-                TCP_MANAGER.insert(addr, arc_mutex_stream.clone());
+                tcp_manager::insert(addr, arc_mutex_stream.clone());
                 thread::spawn(move || handle_socket(peer_addr, arc_mutex_stream.clone()));
             }
             Err(e) => {
@@ -55,12 +44,12 @@ fn handle_socket(peer_addr: String, ax_stream: Arc<Mutex<TcpStream>>) {
                 let data = String::from_utf8_lossy(&buffer[..bytes_read]);
                 // 将接收到的数据拼接到已接收数据的末尾
                 received_data.push_str(&data);
+
                 if received_data.ends_with("\n") {
                     let body = received_data.clone();
                     println!("接收信息为, {:#?}: {:#?}", peer_addr, body);
                     received_data.clear();
-                    TCP_MANAGER.broadcast(body.as_bytes());
-                    // broadcast(body.as_bytes());
+                    tcp_manager::send_message(ax_stream.clone(), body.as_bytes());
                 }
 
                 continue;
