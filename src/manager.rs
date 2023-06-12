@@ -1,16 +1,18 @@
 use lazy_static::lazy_static;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
+use crate::state;
+
 lazy_static! {
-    static ref TCP_QUEUE: Arc<Mutex<VecDeque<serde_json::Value>>> =
+    pub static ref TCP_QUEUE: Arc<Mutex<VecDeque<serde_json::Value>>> =
         Arc::new(Mutex::new(VecDeque::new()));
-    static ref MSG_QUEUE: Arc<Mutex<VecDeque<serde_json::Value>>> =
+    pub static ref MSG_QUEUE: Arc<Mutex<VecDeque<serde_json::Value>>> =
         Arc::new(Mutex::new(VecDeque::new()));
-    // static ref STATE_MAP: HashMap<String, u8> = HashMap::new();
-    static ref RELATION: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
+    pub static ref RELATION: Arc<Mutex<HashMap<String, Arc<Mutex<HashSet<String>>>>>> =
+        Arc::new(Mutex::new(HashMap::new()));
 }
 
 pub fn tcp_manager_run() {
@@ -22,7 +24,6 @@ pub fn tcp_manager_run() {
         if let Some(tcp_message) = tcp_queue_clone.lock().unwrap().pop_front() {
             println!("{}", tcp_message);
         }
-        println!("通信运行时间: {}s", tick);
         tick += 1;
         thread::sleep(Duration::from_secs(1))
     });
@@ -36,8 +37,26 @@ pub fn state_manager_run() {
         if let Some(msg_value) = msg_queue_clone.lock().unwrap().pop_front() {
             println!("{}", msg_value);
         }
-        println!("状态更新时间: {}s", tick);
         tick += 1;
         thread::sleep(Duration::from_secs(1));
     });
+}
+
+pub fn join_state(name: String, room: String) {
+    let name_clone = name.clone();
+
+    let temp_map = RELATION.lock().unwrap();
+
+    // if let Some(tcps) = temp_map.get_mut(&name_clone) {
+    //     tcps.clone().lock().unwrap().insert(name_clone);
+    // } else {
+    //     let mut tcps = HashSet::new();
+    //     tcps.insert(name_clone.clone());
+
+    //     RELATION
+    //         .clone()
+    //         .lock()
+    //         .unwrap()
+    //         .insert(room.clone(), Arc::new(Mutex::new(tcps)));
+    // }
 }

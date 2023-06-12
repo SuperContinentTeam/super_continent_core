@@ -1,4 +1,5 @@
 mod manager;
+mod state;
 mod tcp_manager;
 
 use std::io::Read;
@@ -9,6 +10,7 @@ use std::thread;
 fn main() {
     let listener = TcpListener::bind("0.0.0.0:55555").unwrap();
     println!("Listening 0.0.0.0:55555...");
+    state::initial();
     manager::tcp_manager_run();
     manager::state_manager_run();
 
@@ -47,9 +49,22 @@ fn handle_socket(peer_addr: String, ax_stream: Arc<Mutex<TcpStream>>) {
 
                 if received_data.ends_with("\n") {
                     let body = received_data.clone();
-                    println!("接收信息为, {:#?}: {:#?}", peer_addr, body);
                     received_data.clear();
-                    tcp_manager::send_message(ax_stream.clone(), body.as_bytes());
+
+                    // 转化为json
+                    let message: serde_json::Value = serde_json::from_str(body.trim_end()).unwrap();
+                    if let Some(op) = message.get("op") {
+                        let str_op = op.as_str().unwrap();
+                        println!("获取到的操作: {}", str_op);
+                        match str_op {
+                            "join" => {
+                                let name = message.get("name").unwrap().to_string();
+                                let room = message.get("room").unwrap().to_string();
+                            }
+                            _ => (),
+                        }
+                    }
+                    // tcp_manager::send_message(ax_stream.clone(), body.as_bytes());
                 }
 
                 continue;
