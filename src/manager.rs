@@ -15,11 +15,11 @@ pub fn fix_message(text: &[u8]) -> Vec<u8> {
     message
 }
 
-pub struct MessageManager {
+pub struct TcpManager {
     pub peer_map: Arc<Mutex<HashMap<String, Arc<Mutex<TcpStream>>>>>,
 }
 
-impl MessageManager {
+impl TcpManager {
     pub fn new() -> Self {
         Self {
             peer_map: Arc::new(Mutex::new(HashMap::new())),
