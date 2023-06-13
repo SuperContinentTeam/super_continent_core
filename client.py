@@ -8,11 +8,7 @@ client.connect(("127.0.0.1", 55555))
 
 name = os.urandom(6).hex()
 
-data = json.dumps({
-    "op": "join",
-    "name": name,
-    "room": "localhost"
-})
+data = json.dumps({"op": "join", "body": {"name": name, "room": "localhost"}})
 
 client.send(f"{data}\n".encode())
 

@@ -1,3 +1,4 @@
+mod commander;
 mod manager;
 mod message;
 mod state;
@@ -8,6 +9,8 @@ use std::io::Read;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
+
+use crate::commander::Command;
 
 fn main() {
     let listener = TcpListener::bind("0.0.0.0:55555").unwrap();
@@ -51,8 +54,13 @@ fn handle_tcp(addr: String, ax_tcp: Arc<Mutex<TcpStream>>) {
                     received_data.clear();
 
                     // 转化为json
-                    let message: serde_json::Value = serde_json::from_str(body.trim_end()).unwrap();
-                    println!("接收消息: {:#?}", message);
+                    let body: serde_json::Value = serde_json::from_str(body.trim_end()).unwrap();
+                    // 转化为指令实例
+                    let command = Command {
+                        op: body.get("op").unwrap().to_string(),
+                        body: body.get("body").unwrap().to_owned(),
+                    };
+                    commander::command_executor(command);
                 }
 
                 continue;
@@ -69,54 +77,54 @@ fn handle_tcp(addr: String, ax_tcp: Arc<Mutex<TcpStream>>) {
     }
 }
 
-fn handle_socket(peer_addr: String, ax_stream: Arc<Mutex<TcpStream>>) {
-    let mut buffer = [0; 1024];
-    let mut received_data = String::new();
-    println!("已连接: {}", peer_addr);
+// fn handle_socket(peer_addr: String, ax_stream: Arc<Mutex<TcpStream>>) {
+//     let mut buffer = [0; 1024];
+//     let mut received_data = String::new();
+//     println!("已连接: {}", peer_addr);
 
-    loop {
-        let recv = ax_stream.clone().lock().unwrap().read(&mut buffer);
+//     loop {
+//         let recv = ax_stream.clone().lock().unwrap().read(&mut buffer);
 
-        match recv {
-            Ok(bytes_read) if bytes_read > 0 => {
-                // 将接收到的数据转换为字符串
-                let data = String::from_utf8_lossy(&buffer[..bytes_read]);
-                // 将接收到的数据拼接到已接收数据的末尾
-                received_data.push_str(&data);
+//         match recv {
+//             Ok(bytes_read) if bytes_read > 0 => {
+//                 // 将接收到的数据转换为字符串
+//                 let data = String::from_utf8_lossy(&buffer[..bytes_read]);
+//                 // 将接收到的数据拼接到已接收数据的末尾
+//                 received_data.push_str(&data);
 
-                if received_data.ends_with("\n") {
-                    let body = received_data.clone();
-                    received_data.clear();
+//                 if received_data.ends_with("\n") {
+//                     let body = received_data.clone();
+//                     received_data.clear();
 
-                    // 转化为json
-                    let message: serde_json::Value = serde_json::from_str(body.trim_end()).unwrap();
-                    if let Some(op) = message.get("op") {
-                        let str_op = op.as_str().unwrap();
-                        println!("获取到的操作: {}", str_op);
-                        match str_op {
-                            "join" => {
-                                let name = message.get("name").unwrap().to_string();
-                                let room = message.get("room").unwrap().to_string();
-                            }
-                            _ => (),
-                        }
-                    }
-                    // tcp_manager::send_message(ax_stream.clone(), body.as_bytes());
-                }
+//                     // 转化为json
+//                     let message: serde_json::Value = serde_json::from_str(body.trim_end()).unwrap();
+//                     if let Some(op) = message.get("op") {
+//                         let str_op = op.as_str().unwrap();
+//                         println!("获取到的操作: {}", str_op);
+//                         match str_op {
+//                             "join" => {
+//                                 let name = message.get("name").unwrap().to_string();
+//                                 let room = message.get("room").unwrap().to_string();
+//                             }
+//                             _ => (),
+//                         }
+//                     }
+//                     // tcp_manager::send_message(ax_stream.clone(), body.as_bytes());
+//                 }
 
-                continue;
-            }
-            Ok(_) => {
-                println!("Disconnect socket");
-                break;
-            }
-            Err(e) => {
-                println!("Error: {}", e);
-                break;
-            }
-        }
-    }
-}
+//                 continue;
+//             }
+//             Ok(_) => {
+//                 println!("Disconnect socket");
+//                 break;
+//             }
+//             Err(e) => {
+//                 println!("Error: {}", e);
+//                 break;
+//             }
+//         }
+//     }
+// }
 
 // fn parse_data(message: String) -> serde_json::Value {
 //     let msg = message.trim_end();
