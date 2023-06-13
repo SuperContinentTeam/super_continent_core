@@ -1,3 +1,4 @@
+mod commander;
 mod reference;
 mod state;
 mod tcp;

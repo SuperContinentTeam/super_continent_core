@@ -1,7 +1,14 @@
 use std::{
+    collections::HashMap,
     net::TcpStream,
     sync::{Arc, Mutex},
 };
+
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref STATE_MAP: HashMap<String, Arc<Mutex<State>>> = HashMap::new();
+}
 
 pub struct State {
     pub name: String,
