@@ -3,7 +3,6 @@ mod manager;
 mod message;
 mod state;
 mod tcp;
-mod tcp_manager;
 
 use std::io::Read;
 use std::net::{TcpListener, TcpStream};

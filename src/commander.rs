@@ -7,14 +7,13 @@ pub struct Command {
 }
 
 pub fn command_executor(c: Command) {
-    let op = c.op.as_str();
     // let body = c.body;
-    match op {
+    match c.op.as_str() {
         "join" => {
             println!("join");
         }
         _ => {
-            println!("Not found command: {}", op);
+            println!("Not found command: {}", c.op);
         }
     }
 }
