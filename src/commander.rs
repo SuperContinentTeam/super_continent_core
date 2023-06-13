@@ -8,19 +8,20 @@ pub struct Command {
 
 pub fn command_executor(c: Command) {
     // let body = c.body;
-    match c.op.as_str() {
+    let op = c.op.as_str();
+    match op {
         "join" => {
             println!("join");
         }
         _ => {
-            println!("Not found command: {}", c.op);
+            println!("Not found command: {}", op);
         }
     }
 }
 
-pub fn join(body: Value) {
-    println!("{}", 1);
-    let name = body.get("name").unwrap().to_string();
-    let room = body.get("room").unwrap().to_string();
-    println!("玩家【{}】加入房间[{}]", name, room);
-}
+// pub fn join(body: Value) {
+//     println!("{}", 1);
+//     let name = body.get("name").unwrap().to_string();
+//     let room = body.get("room").unwrap().to_string();
+//     println!("玩家【{}】加入房间[{}]", name, room);
+// }
