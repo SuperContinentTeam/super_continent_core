@@ -35,7 +35,7 @@ fn main() {
 }
 
 fn handle_tcp(addr: String, ax_tcp: Arc<Mutex<TcpStream>>) {
-    println!("{} 已连接", addr);
+    println!("{} is connected", addr);
     let mut buffer = [0; 1024];
     let mut received_data = String::new();
     loop {

@@ -16,7 +16,7 @@ lazy_static! {
 }
 
 pub fn tcp_manager_run() {
-    println!("启动通信对立消费线程...");
+    println!("Launch TCP Threading ...");
     let mut tick = 1;
     let tcp_queue_clone = TCP_QUEUE.clone();
 
@@ -30,7 +30,7 @@ pub fn tcp_manager_run() {
 }
 
 pub fn state_manager_run() {
-    println!("启动状态队列消费线程...");
+    println!("Launch State Threading...");
     let mut tick = 1;
     let msg_queue_clone = MSG_QUEUE.clone();
     thread::spawn(move || loop {
