@@ -11,16 +11,15 @@ data = json.dumps({"op": "join", "body": {"name": name, "room": "localhost"}})
 
 client.send(f"{data}\n".encode())
 
-while recv := client.recv(65535):
-    print(recv.decode())
-
 
 def receiver():
+    print("启动接收线程")
     while recv := client.recv(65535):
         print(recv.decode())
 
 
 def sender():
+    print("启动输入线程")
     while i := input("> "):
         client.send(f"{i}\n".encode())
 

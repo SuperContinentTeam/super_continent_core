@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Message {
     pub sender: String,
     pub receiver: String,

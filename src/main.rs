@@ -5,6 +5,7 @@ mod reference;
 mod state;
 mod tcp;
 
+use dotenv::dotenv;
 use std::io::Read;
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
@@ -14,11 +15,14 @@ use crate::commander::Command;
 use crate::reference::get_string;
 
 fn main() {
+    dotenv().ok();
+
     let listener = TcpListener::bind("0.0.0.0:55555").unwrap();
     println!("Listening 0.0.0.0:55555...");
-    state::initial();
-    manager::tcp_manager_run();
-    manager::state_manager_run();
+
+    manager::initial();
+    tcp::tcp_manager_run();
+    state::state_manager_run();
 
     for stream in listener.incoming() {
         match stream {
