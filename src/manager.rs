@@ -25,9 +25,3 @@ pub fn initial() {
             .insert("localhost".to_string(), HashSet::new());
     }
 }
-
-// pub fn add_message_for_state(message: message::Message) {
-//     let msg_queue_clone = MSG_QUEUE.clone();
-//     let mut queue = msg_queue_clone.lock().unwrap();
-//     queue.push_back(message);
-// }
