@@ -8,6 +8,7 @@ pub struct Tcp {
 }
 
 impl Tcp {
+    #[allow(dead_code)]
     pub fn send(&mut self, message: Message) {
         let data = message.to_json();
         let binding = data.to_string();

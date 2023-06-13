@@ -1,6 +1,7 @@
 mod commander;
 mod manager;
 mod message;
+mod reference;
 mod state;
 mod tcp;
 
@@ -10,6 +11,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 
 use crate::commander::Command;
+use crate::reference::get_string;
 
 fn main() {
     let listener = TcpListener::bind("0.0.0.0:55555").unwrap();
@@ -56,7 +58,7 @@ fn handle_tcp(addr: String, ax_tcp: Arc<Mutex<TcpStream>>) {
                     let body: serde_json::Value = serde_json::from_str(body.trim_end()).unwrap();
                     // 转化为指令实例
                     let command = Command {
-                        op: body.get("op").unwrap().to_string(),
+                        op: get_string(body.get("op").unwrap()),
                         body: body.get("body").unwrap().to_owned(),
                     };
                     commander::command_executor(command);

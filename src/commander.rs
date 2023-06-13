@@ -1,3 +1,4 @@
+use crate::reference::get_string;
 use serde_json::Value;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -7,21 +8,18 @@ pub struct Command {
 }
 
 pub fn command_executor(c: Command) {
-    // let body = c.body;
+    let body = c.body;
     let op = c.op.as_str();
     match op {
-        "join" => {
-            println!("join");
-        }
+        "join" => join(body),
         _ => {
             println!("Not found command: {}", op);
         }
     }
 }
 
-// pub fn join(body: Value) {
-//     println!("{}", 1);
-//     let name = body.get("name").unwrap().to_string();
-//     let room = body.get("room").unwrap().to_string();
-//     println!("玩家【{}】加入房间[{}]", name, room);
-// }
+pub fn join(body: Value) {
+    let name = get_string(body.get("name").unwrap());
+    let room = get_string(body.get("room").unwrap());
+    println!("玩家【{}】加入房间[{}]", name, room);
+}
