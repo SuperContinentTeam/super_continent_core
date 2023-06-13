@@ -1,5 +1,7 @@
 mod manager;
+mod message;
 mod state;
+mod tcp;
 mod tcp_manager;
 
 use std::io::Read;
@@ -20,13 +22,48 @@ fn main() {
                 // 创建新线程处理客户端连接
                 let addr = s.peer_addr().unwrap().to_string();
                 let arc_mutex_stream: Arc<Mutex<TcpStream>> = Arc::new(Mutex::new(s));
-                let peer_addr = addr.clone();
-                // 保存线程对象
-                tcp_manager::insert(addr, arc_mutex_stream.clone());
-                thread::spawn(move || handle_socket(peer_addr, arc_mutex_stream.clone()));
+                // thread::spawn(move || handle_socket(peer_addr, arc_mutex_stream.clone()));
+                thread::spawn(move || handle_tcp(addr, arc_mutex_stream.clone()));
             }
             Err(e) => {
                 println!("Error: {}", e);
+            }
+        }
+    }
+}
+
+fn handle_tcp(addr: String, ax_tcp: Arc<Mutex<TcpStream>>) {
+    println!("{} 已连接", addr);
+    let mut buffer = [0; 1024];
+    let mut received_data = String::new();
+    loop {
+        let recv = ax_tcp.clone().lock().unwrap().read(&mut buffer);
+
+        match recv {
+            Ok(bytes_read) if bytes_read > 0 => {
+                // 将接收到的数据转换为字符串
+                let data = String::from_utf8_lossy(&buffer[..bytes_read]);
+                // 将接收到的数据拼接到已接收数据的末尾
+                received_data.push_str(&data);
+
+                if received_data.ends_with("\n") {
+                    let body = received_data.clone();
+                    received_data.clear();
+
+                    // 转化为json
+                    let message: serde_json::Value = serde_json::from_str(body.trim_end()).unwrap();
+                    println!("接收消息: {:#?}", message);
+                }
+
+                continue;
+            }
+            Ok(_) => {
+                println!("Disconnect socket");
+                break;
+            }
+            Err(e) => {
+                println!("Error: {}", e);
+                break;
             }
         }
     }

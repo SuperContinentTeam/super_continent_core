@@ -16,7 +16,7 @@ lazy_static! {
 }
 
 pub fn tcp_manager_run() {
-    println!("启动通信监听线程...");
+    println!("启动通信对立消费线程...");
     let mut tick = 1;
     let tcp_queue_clone = TCP_QUEUE.clone();
 
@@ -30,7 +30,7 @@ pub fn tcp_manager_run() {
 }
 
 pub fn state_manager_run() {
-    println!("启动状态更新线程...");
+    println!("启动状态队列消费线程...");
     let mut tick = 1;
     let msg_queue_clone = MSG_QUEUE.clone();
     thread::spawn(move || loop {
@@ -45,18 +45,16 @@ pub fn state_manager_run() {
 pub fn join_state(name: String, room: String) {
     let name_clone = name.clone();
 
-    let temp_map = RELATION.lock().unwrap();
+    let mut temp_map = RELATION.lock().unwrap();
 
-    // if let Some(tcps) = temp_map.get_mut(&name_clone) {
-    //     tcps.clone().lock().unwrap().insert(name_clone);
-    // } else {
-    //     let mut tcps = HashSet::new();
-    //     tcps.insert(name_clone.clone());
-
-    //     RELATION
-    //         .clone()
-    //         .lock()
-    //         .unwrap()
-    //         .insert(room.clone(), Arc::new(Mutex::new(tcps)));
-    // }
+    let _ = match temp_map.get_mut(&name_clone) {
+        Some(tcp_set) => {
+            tcp_set.clone().lock().unwrap().insert(name_clone.clone());
+        }
+        None => {
+            let mut tcp_set = HashSet::new();
+            tcp_set.insert(name_clone.clone());
+            temp_map.insert(room.clone(), Arc::new(Mutex::new(tcp_set)));
+        }
+    };
 }
