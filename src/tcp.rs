@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::Read;
 use std::{
     net::TcpStream,
     sync::{Arc, Mutex},
@@ -12,24 +12,18 @@ pub struct Tcp {
     pub stream: Arc<Mutex<TcpStream>>,
 }
 
-impl Tcp {
-    pub fn send(&self, text: String) {
-        let stream_clone = self.stream.clone();
-        let mut stream = stream_clone.lock().unwrap();
-
-        let text = text.as_bytes();
-        let mut msg = text.to_owned();
-        if let Some(last) = msg.last() {
-            if *last != 10 {
-                msg.push(10);
-            }
+pub fn fix_message(text: String) -> Vec<u8> {
+    let text = text.as_bytes();
+    let mut msg = text.to_owned();
+    if let Some(last) = msg.last() {
+        if *last != 10 {
+            msg.push(10);
         }
-
-        let _ = stream.write_all(&msg);
     }
+    msg
 }
 
-pub fn receive_threading_start(tcp: Tcp) {
+pub fn receive_threading_start(tcp: &mut Tcp) {
     println!("{} is connected", tcp.addr);
     let mut buffer = [0; 1024];
     let mut received_data = String::new();
@@ -56,7 +50,7 @@ pub fn receive_threading_start(tcp: Tcp) {
                     body: body.get("body").unwrap().to_owned(),
                 };
 
-                commander::command_executor(&tcp, command);
+                commander::command_executor(tcp, command);
             }
             Err(e) => {
                 println!("Disconnect socket, Error: {}", e);

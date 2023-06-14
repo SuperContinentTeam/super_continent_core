@@ -12,6 +12,10 @@ use tcp::Tcp;
 
 fn main() {
     dotenv().ok();
+    let b_initial = std::env::var("CREATE_LOCAL_ROOM").unwrap_or("1".to_string());
+    if b_initial == "1" {
+        state::init();
+    }
 
     let listener = TcpListener::bind("0.0.0.0:55555").unwrap();
     println!("Listening 0.0.0.0:55555...");
@@ -19,13 +23,13 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(s) => {
-                let tcp = Tcp {
+                let mut tcp = Tcp {
                     addr: s.peer_addr().unwrap().to_string(),
                     state: None,
                     stream: Arc::new(Mutex::new(s)),
                 };
                 // 创建新线程处理客户端连接
-                thread::spawn(move || tcp::receive_threading_start(tcp));
+                thread::spawn(move || tcp::receive_threading_start(&mut tcp));
             }
             Err(e) => {
                 println!("Error: {}", e);
