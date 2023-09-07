@@ -1,14 +1,9 @@
-use std::error::Error;
 use std::thread;
 
 use chrono::Local;
 use tokio;
 
 mod state;
-
-async fn sleep(sec: u64) {
-    tokio::time::sleep(tokio::time::Duration::from_secs(sec)).await;
-}
 
 fn main() {
     let thread_state = thread::spawn(move || {
