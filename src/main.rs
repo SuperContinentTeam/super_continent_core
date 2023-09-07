@@ -1,8 +1,14 @@
+use std::error::Error;
 use std::thread;
 
+use chrono::Local;
 use tokio;
 
-use chrono::Local;
+mod state;
+
+async fn sleep(sec: u64) {
+    tokio::time::sleep(tokio::time::Duration::from_secs(sec)).await;
+}
 
 fn main() {
     let thread_state = thread::spawn(move || {
@@ -10,7 +16,16 @@ fn main() {
 
         rt_state.block_on(async {
             println!("启动状态机: {}", Local::now().format("%F %T"));
-            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+            let time_flow = tokio::time::Duration::from_secs(1);
+
+            let mut state = state::core::State::new("A".to_string());
+            loop {
+                println!("State: {}, tick: {}", state.name, state.tick);
+                match state.next() {
+                    Ok(_) => { tokio::time::sleep(time_flow).await; }
+                    Err(_) => { break; }
+                }
+            }
             println!("结束状态机: {}", Local::now().format("%F %T"));
         });
     });
