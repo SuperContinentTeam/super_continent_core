@@ -1,7 +1,7 @@
 use std::error::Error;
 
 pub struct State {
-    pub tick: usize,
+    pub tick: u64,
     pub name: String,
 }
 
