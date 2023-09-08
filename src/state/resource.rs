@@ -63,6 +63,10 @@ impl StateResource {
         }
     }
 
+    pub fn next(&mut self) {
+
+    }
+
     pub fn display(&self) -> serde_json::Value {
         serde_json::json!(self)
     }

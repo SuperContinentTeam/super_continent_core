@@ -1,5 +1,5 @@
-use std::error::Error;
 use serde::{Deserialize, Serialize};
+use crate::state::NextState;
 use crate::state::resource::StateResource;
 
 #[derive(Deserialize, Serialize)]
@@ -18,8 +18,10 @@ impl State {
             state_resource: StateResource::new(),
         }
     }
+}
 
-    pub fn next(&mut self) {
+impl NextState for State {
+    fn next(&mut self) {
         self.tick += 1;
     }
 }
