@@ -1,22 +1,29 @@
-mod state;
 mod event_bus;
-
+mod state;
 
 fn main() {
-    let name1 = serde_json::json!({"name": "A"});
-    let name2 = serde_json::json!({"name": "B"});
-
     event_bus::register("AddState", |value| {
         state::manager::add_state(value);
     });
 
-    event_bus::emit("AddState", &name1);
-    event_bus::emit("AddState", &name2);
+    for i in 1..3 {
+        let name = serde_json::json!({"name": i});
+        event_bus::emit("AddState", &name);
+    }
 
-    std::thread::sleep(std::time::Duration::from_secs(3600));
+    // 网络通讯运行时
+    let rt = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(8)
+        .enable_all()
+        .build()
+        .unwrap();
 
-    // let thread_net = thread::spawn(|| {
-    //     let rt_net = tokio::runtime::Runtime::new().unwrap();
-    // });
-    // thread_net.join().unwrap();
+    rt.block_on(async {
+        let mut time_counter = 1;
+        loop {
+            println!("等待连接: {}", time_counter);
+            time_counter += 1;
+            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        }
+    });
 }
