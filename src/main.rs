@@ -16,6 +16,8 @@ fn main() {
     let name2 = serde_json::json!({"name": "B"});
     state::manager::add_state(name2);
 
+    std::thread::sleep(std::time::Duration::from_secs(3600));
+
     // let ax_manager = Arc::new(Mutex::new(StateManager::new()));
     // let manager_clone = ax_manager.clone();
     //

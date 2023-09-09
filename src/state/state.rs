@@ -23,5 +23,7 @@ impl State {
 impl NextState for State {
     fn next(&mut self) {
         self.tick += 1;
+
+        println!("State: {}, Tick: {}", self.name, self.tick);
     }
 }
