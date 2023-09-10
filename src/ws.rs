@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use fastwebsockets::upgrade;
 use fastwebsockets::OpCode;
 use fastwebsockets::WebSocketError;
@@ -13,37 +15,20 @@ pub async fn start_server() {
     println!("Start Server in: {:?}", bind_addr);
     let listener = TcpListener::bind(&bind_addr).await.unwrap();
     loop {
-        let (stream, _) = listener.accept().await.unwrap();
-        println!("Client connected");
+        let (stream, client_addr) = listener.accept().await.unwrap();
+        println!("Client connected: {}", client_addr);
         tokio::spawn(async move {
-          let conn_fut = Http::new()
-            .serve_connection(stream, service_fn(server_upgrade))
-            .with_upgrades();
-          if let Err(e) = conn_fut.await {
-            println!("An error occurred: {:?}", e);
-          }
-        });
-      }
-}
-
-pub async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
-    let mut ws = fastwebsockets::FragmentCollector::new(fut.await?);
-
-    loop {
-        let frame = ws.read_frame().await?;
-        match frame.opcode {
-            OpCode::Close => break,
-            OpCode::Text | OpCode::Binary => {
-                ws.write_frame(frame).await?;
+            let conn_fut = Http::new()
+                .serve_connection(stream, service_fn(server_upgrade))
+                .with_upgrades();
+            if let Err(e) = conn_fut.await {
+                println!("An error occurred: {:?}", e);
             }
-            _ => {}
-        }
+        });
     }
-
-    Ok(())
 }
 
-pub async fn server_upgrade(mut req: Request<Body>) -> Result<Response<Body>, WebSocketError> {
+async fn server_upgrade(mut req: Request<Body>) -> Result<Response<Body>, WebSocketError> {
     let (response, fut) = upgrade::upgrade(&mut req)?;
 
     tokio::task::spawn(async move {
@@ -53,4 +38,25 @@ pub async fn server_upgrade(mut req: Request<Body>) -> Result<Response<Body>, We
     });
 
     Ok(response)
+}
+
+async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
+    let mut ws = fastwebsockets::FragmentCollector::new(fut.await?);
+
+    loop {
+        let frame = ws.read_frame().await?;
+        match frame.opcode {
+            OpCode::Close => break,
+            OpCode::Text | OpCode::Binary => {
+                let content = frame.payload.as_ref();
+                let str_content = std::str::from_utf8(content).unwrap();
+                let value = serde_json::Value::from_str(str_content).unwrap();
+                println!("{:#?}", value);
+                ws.write_frame(frame).await?;
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
 }
