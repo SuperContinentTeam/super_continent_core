@@ -6,10 +6,10 @@ use crate::state::state::State;
 use crate::state::NextState;
 
 type AXState = Arc<Mutex<State>>;
+type StateMap = Arc<Mutex<HashMap<String, AXState>>>;
 
 lazy_static! {
-    static ref STATE_MAP: Arc<Mutex<HashMap<String, AXState>>> =
-        Arc::new(Mutex::new(HashMap::new()));
+    static ref STATE_MAP: Arc<Mutex<HashMap<String, AXState>>> = StateMap::default();
     static ref TIME_FLOW: tokio::time::Duration = tokio::time::Duration::from_secs(1);
 }
 

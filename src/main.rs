@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use warp::Filter;
 
 mod event_bus;
 mod state;
@@ -17,7 +17,7 @@ fn main() {
         .unwrap();
 
     rt.block_on(async {
-        let socket_addr = SocketAddr::from(([0, 0, 0, 0], 7000));
-        println!("Listening on: {}", socket_addr);
+        let socket_addr = ([0, 0, 0, 0], 7000);
+        println!("Start Server in: {:?}", socket_addr);
     });
 }

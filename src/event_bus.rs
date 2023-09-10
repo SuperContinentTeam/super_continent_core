@@ -1,14 +1,13 @@
-pub mod events;
-
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
 
 type Listener = fn(serde_json::Value);
 type Listeners = Vec<Listener>;
+type EventMap = Arc<Mutex<HashMap<String, Listeners>>>;
 
 lazy_static! {
-    static ref EVENT_MAP: Arc<Mutex<HashMap<String, Listeners>>> = Arc::new(Mutex::new(HashMap::new()));
+    static ref EVENT_MAP: Arc<Mutex<HashMap<String, Listeners>>> = EventMap::default();
 }
 
 
