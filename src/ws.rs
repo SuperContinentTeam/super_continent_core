@@ -50,9 +50,7 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
         match frame.opcode {
             OpCode::Close => break,
             OpCode::Text | OpCode::Binary => {
-                let content = frame.payload.to_vec();
-                let str_content = std::str::from_utf8(&content).unwrap();
-                let value = serde_json::Value::from_str(str_content).unwrap();
+                let value = parse_to_value(&frame.payload);
                 println!("{:#?}", value);
 
                 let resp = serde_json::json!({
@@ -70,4 +68,11 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
     }
 
     Ok(())
+}
+
+
+fn parse_to_value(payload: &Payload) -> serde_json:: Value {
+    let u8_content  = payload.to_vec();
+    let content = std::str::from_utf8(&u8_content).unwrap();
+    serde_json::Value::from_str(content).unwrap()
 }
