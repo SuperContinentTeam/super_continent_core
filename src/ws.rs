@@ -54,7 +54,7 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
 
     loop {
         let ws_clone = ax_ws.clone();
-        
+
         let frame = {
             let mut ws_gurand = ws_clone.lock().await;
             ws_gurand.read_frame().await?
@@ -68,9 +68,11 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
 
                 if let Some(op) = value.get("op") {
                     let op = op.as_str().unwrap();
+                    println!("OP={}", op);
                     match op {
                         "join" => {
-                            let _ = join_room(&value, ws_clone.clone()).await;
+                            let v = join_room(&value, ws_clone.clone()).await;
+                            println!("Join Result={:#?}", v);
                         }
                         _ => {}
                     }
@@ -81,12 +83,8 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
                     "payloady": value
                 });
 
-                send_message(&resp, &ws_clone).await;
-                // let resp_clone = resp.clone();
-                // let resp_vec_u8 = resp_clone.as_bytes();
-                // let payload = Payload::from(resp_vec_u8);
-                // let new_frame = Frame::new(true, frame.opcode, None, payload);
-                // ws_gurand.write_frame(new_frame).await?;
+                // send_message(&resp, &ws_clone).await;
+                broadcast("A", &resp).await;
             }
             _ => {}
         }
@@ -122,6 +120,7 @@ async fn join_room(message: &Value, websocket: AXController) -> Value {
 
     let peer_map_clone = PEER_MAP.clone();
     let mut peer_map = peer_map_clone.lock().await;
+    println!("OP: join, Name: {}, Room: {}", name, room);
 
     match peer_map.get_mut(room) {
         Some(ws_map) => {
