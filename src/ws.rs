@@ -1,29 +1,56 @@
-use lazy_static::lazy_static;
-use tokio_stream::wrappers::UnboundedReceiverStream;
-use std::{sync::Arc, collections::HashMap};
+use fastwebsockets::upgrade;
+use fastwebsockets::OpCode;
+use fastwebsockets::WebSocketError;
+use hyper::server::conn::Http;
+use hyper::service::service_fn;
+use hyper::Body;
+use hyper::Request;
+use hyper::Response;
+use tokio::net::TcpListener;
 
-use tokio::sync::{ RwLock, mpsc};
-use warp::filters::ws::{WebSocket, Message};
-use futures_util::{SinkExt, StreamExt, TryFutureExt};
-type Clients = Arc<RwLock<HashMap<String, mpsc::UnboundedSender<Message>>>>;
-
-lazy_static! {
-    static ref PEER_MAP: Clients = Clients::default();
+pub async fn start_server() {
+    let bind_addr = "0.0.0.0:7000".to_string();
+    println!("Start Server in: {:?}", bind_addr);
+    let listener = TcpListener::bind(&bind_addr).await.unwrap();
+    loop {
+        let (stream, _) = listener.accept().await.unwrap();
+        println!("Client connected");
+        tokio::spawn(async move {
+          let conn_fut = Http::new()
+            .serve_connection(stream, service_fn(server_upgrade))
+            .with_upgrades();
+          if let Err(e) = conn_fut.await {
+            println!("An error occurred: {:?}", e);
+          }
+        });
+      }
 }
 
-pub async fn ws_handler(ws: WebSocket) {
-    let(mut client_ws_tx, mut client_ws_rx) = ws.split();
-    let (tx, rx) = mpsc::unbounded_channel();
-    let mut rx = UnboundedReceiverStream::new(rx);
+pub async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
+    let mut ws = fastwebsockets::FragmentCollector::new(fut.await?);
+
+    loop {
+        let frame = ws.read_frame().await?;
+        match frame.opcode {
+            OpCode::Close => break,
+            OpCode::Text | OpCode::Binary => {
+                ws.write_frame(frame).await?;
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn server_upgrade(mut req: Request<Body>) -> Result<Response<Body>, WebSocketError> {
+    let (response, fut) = upgrade::upgrade(&mut req)?;
 
     tokio::task::spawn(async move {
-        while let Some(message) = rx.next().await {
-            client_ws_tx
-                .send(message)
-                .unwrap_or_else(|e| {
-                    eprintln!("websocket send error: {}", e);
-                })
-                .await;
+        if let Err(e) = tokio::task::unconstrained(handle_client(fut)).await {
+            eprintln!("Error in websocket connection: {}", e);
         }
     });
+
+    Ok(response)
 }

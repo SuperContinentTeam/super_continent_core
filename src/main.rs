@@ -1,5 +1,3 @@
-use warp::Filter;
-
 mod event_bus;
 mod state;
 mod ws;
@@ -16,8 +14,5 @@ fn main() {
         .build()
         .unwrap();
 
-    rt.block_on(async {
-        let socket_addr = ([0, 0, 0, 0], 7000);
-        println!("Start Server in: {:?}", socket_addr);
-    });
+    rt.block_on(ws::start_server());
 }
