@@ -1,5 +1,7 @@
 use std::str::FromStr;
 
+use fastwebsockets::Frame;
+use fastwebsockets::Payload;
 use fastwebsockets::upgrade;
 use fastwebsockets::OpCode;
 use fastwebsockets::WebSocketError;
@@ -48,11 +50,20 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
         match frame.opcode {
             OpCode::Close => break,
             OpCode::Text | OpCode::Binary => {
-                let content = frame.payload.as_ref();
-                let str_content = std::str::from_utf8(content).unwrap();
+                let content = frame.payload.to_vec();
+                let str_content = std::str::from_utf8(&content).unwrap();
                 let value = serde_json::Value::from_str(str_content).unwrap();
                 println!("{:#?}", value);
-                ws.write_frame(frame).await?;
+
+                let resp = serde_json::json!({
+                    "op": "hey",
+                    "payloady": value
+                }).to_string();
+                let resp_clone = resp.clone();
+                let resp_vec_u8 = resp_clone.as_bytes();
+                let payload = Payload::from(resp_vec_u8);
+                let new_frame = Frame::new(true, frame.opcode, None, payload);
+                ws.write_frame(new_frame).await?;
             }
             _ => {}
         }
