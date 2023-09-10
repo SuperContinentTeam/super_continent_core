@@ -5,6 +5,8 @@ use serde_json::{json, Value};
 use std::{collections::HashMap, str::FromStr, sync::Arc};
 use tokio::{net::TcpListener, sync::Mutex};
 
+use crate::event_bus;
+
 type AXController = Arc<Mutex<FragmentCollector<Upgraded>>>;
 type PeerMap = Arc<Mutex<HashMap<String, HashMap<String, AXController>>>>;
 
@@ -64,27 +66,16 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
             OpCode::Close => break,
             OpCode::Text | OpCode::Binary => {
                 let value = parse_to_value(&frame.payload);
-                println!("{:#?}", value);
-
                 if let Some(op) = value.get("op") {
                     let op = op.as_str().unwrap();
-                    println!("OP={}", op);
                     match op {
                         "join" => {
-                            let v = join_room(&value, ws_clone.clone()).await;
-                            println!("Join Result={:#?}", v);
+                            let result = join_room(&value, ws_clone.clone()).await;
+                            send_message(&result, &ws_clone).await;
                         }
                         _ => {}
                     }
                 }
-
-                let resp = json!({
-                    "op": "hey",
-                    "payloady": value
-                });
-
-                // send_message(&resp, &ws_clone).await;
-                broadcast("A", &resp).await;
             }
             _ => {}
         }
@@ -117,10 +108,10 @@ async fn broadcast(room: &str, message: &Value) {
 async fn join_room(message: &Value, websocket: AXController) -> Value {
     let name = message.get("name").unwrap().as_str().unwrap();
     let room = message.get("room").unwrap().as_str().unwrap();
-
+    println!("Player {} join the room: {}", name, room);
+    
     let peer_map_clone = PEER_MAP.clone();
     let mut peer_map = peer_map_clone.lock().await;
-    println!("OP: join, Name: {}, Room: {}", name, room);
 
     match peer_map.get_mut(room) {
         Some(ws_map) => {
@@ -132,6 +123,7 @@ async fn join_room(message: &Value, websocket: AXController) -> Value {
             let mut ws_map: HashMap<String, AXController> = HashMap::new();
             ws_map.insert(name.to_string(), websocket.clone());
             peer_map.insert(room.to_string(), ws_map);
+            event_bus::emit("AddState", &json!({"name": room}));
         }
     }
 
