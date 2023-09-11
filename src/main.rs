@@ -1,6 +1,7 @@
 mod event_bus;
 mod state;
 mod ws;
+mod commander;
 
 fn main() {
     init();

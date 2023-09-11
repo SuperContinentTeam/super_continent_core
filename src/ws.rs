@@ -5,13 +5,13 @@ use serde_json::{json, Value};
 use std::{collections::HashMap, str::FromStr, sync::Arc};
 use tokio::{net::TcpListener, sync::Mutex};
 
-use crate::event_bus;
+use crate::commander;
 
-type AXController = Arc<Mutex<FragmentCollector<Upgraded>>>;
-type PeerMap = Arc<Mutex<HashMap<String, HashMap<String, AXController>>>>;
+pub type AXController = Arc<Mutex<FragmentCollector<Upgraded>>>;
+pub type PeerMap = Arc<Mutex<HashMap<String, HashMap<String, AXController>>>>;
 
 lazy_static! {
-    static ref PEER_MAP: PeerMap = PeerMap::default();
+    pub static ref PEER_MAP: PeerMap = PeerMap::default();
 }
 
 pub async fn start_server() {
@@ -53,11 +53,10 @@ fn parse_to_value(payload: &Payload) -> Value {
 async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
     let ws = fastwebsockets::FragmentCollector::new(fut.await?);
     let ax_ws = Arc::new(Mutex::new(ws));
-    loop {
-        let ws_clone = ax_ws.clone();
 
+    loop {
         let frame = {
-            let mut ws_gurand = ws_clone.lock().await;
+            let mut ws_gurand = ax_ws.lock().await;
             ws_gurand.read_frame().await?
         };
 
@@ -72,9 +71,9 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
                     let op = op.as_str().unwrap();
                     match op {
                         "join" => {
-                            let result = join_room(&value, ws_clone.clone()).await;
-                            send_message(&result, &ws_clone).await;
-                        }
+                            let result = commander::join_room(value, ax_ws.clone()).await;
+                            send_message(&result, &ax_ws).await;
+                        },
                         _ => {}
                     }
                 }
@@ -107,27 +106,7 @@ async fn broadcast(room: &str, message: &Value) {
     }
 }
 
-async fn join_room(message: &Value, websocket: AXController) -> Value {
-    let name = message.get("name").unwrap().as_str().unwrap();
-    let room = message.get("room").unwrap().as_str().unwrap();
-    println!("Player {} join the room: {}", name, room);
-
-    let peer_map_clone = PEER_MAP.clone();
-    let mut peer_map = peer_map_clone.lock().await;
-
-    match peer_map.get_mut(room) {
-        Some(ws_map) => {
-            if !ws_map.contains_key(name) {
-                ws_map.insert(name.to_string(), websocket.clone());
-            }
-        }
-        None => {
-            let mut ws_map: HashMap<String, AXController> = HashMap::new();
-            ws_map.insert(name.to_string(), websocket.clone());
-            peer_map.insert(room.to_string(), ws_map);
-            event_bus::emit("AddState", &json!({ "name": room }));
-        }
-    }
-
-    json!({"status": "success"})
+async fn connect_server(message: Value, websocket: AXController) -> Value {
+    json!({})
 }
+
