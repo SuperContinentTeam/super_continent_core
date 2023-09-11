@@ -12,6 +12,7 @@ pub type PeerMap = Arc<Mutex<HashMap<String, HashMap<String, AXController>>>>;
 
 lazy_static! {
     pub static ref PEER_MAP: PeerMap = PeerMap::default();
+    pub static ref CLIENT_MANAGER: ClientManager = ClientManager::new();
 }
 
 pub async fn start_server() {
@@ -78,6 +79,44 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
     }
 
     Ok(())
+}
+
+pub struct Client {
+    pub ws: AXController,
+}
+
+impl Client {
+    pub fn new(ws: AXController) -> Self {
+        Self { ws }
+    }
+
+    pub async fn send_message(self, message: &Value) {
+        let ws_clone = self.ws.clone();
+
+        let str_message = message.to_string();
+        let u8_message = str_message.as_bytes();
+        let frame = Frame::new(true, OpCode::Text, None, Payload::from(u8_message));
+
+        let mut ws = ws_clone.lock().await;
+        ws.write_frame(frame).await.unwrap();
+    }
+}
+
+pub struct ClientManager {
+    pub peer_map: Arc<Mutex<HashMap<String, Client>>>,
+}
+
+impl ClientManager {
+    pub fn new() -> Self {
+        Self {
+            peer_map: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    pub async fn broadcast(&self, message: &Value) {
+        let peer_map_clone = self.peer_map.clone();
+        let peer_map = peer_map_clone.lock().await;
+    }
 }
 
 pub async fn send_message(message: &Value, receiver: &AXController) {

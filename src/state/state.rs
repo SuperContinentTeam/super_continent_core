@@ -21,6 +21,7 @@ pub struct State {
     pub use_number: u8,
     pub max_number: u8,
     pub state_resource: StateResource,
+    pub players: Vec<String>
 }
 
 impl State {
@@ -31,6 +32,7 @@ impl State {
             use_number: 1,
             max_number,
             state_resource: StateResource::default(),
+            players: Vec::default(),
         }
     }
 
