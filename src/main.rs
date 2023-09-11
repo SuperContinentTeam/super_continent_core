@@ -3,9 +3,7 @@ mod state;
 mod ws;
 
 fn main() {
-    event_bus::register("AddState", |value| {
-        state::manager::add_state(value);
-    });
+    init();
 
     // 网络通讯运行时
     let rt = tokio::runtime::Builder::new_multi_thread()
@@ -15,4 +13,8 @@ fn main() {
         .unwrap();
 
     rt.block_on(ws::start_server());
+}
+
+fn init() {
+    event_bus::register("AddState", state::manager::add_state);
 }

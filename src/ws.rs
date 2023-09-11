@@ -34,7 +34,6 @@ pub async fn start_server() {
 
 async fn server_upgrade(mut req: Request<Body>) -> Result<Response<Body>, WebSocketError> {
     let (response, fut) = upgrade::upgrade(&mut req)?;
-
     tokio::task::spawn(async move {
         if let Err(e) = tokio::task::unconstrained(handle_client(fut)).await {
             eprintln!("Error in websocket connection: {}", e);
@@ -47,13 +46,13 @@ async fn server_upgrade(mut req: Request<Body>) -> Result<Response<Body>, WebSoc
 fn parse_to_value(payload: &Payload) -> Value {
     let u8_content = payload.to_vec();
     let content = std::str::from_utf8(&u8_content).unwrap();
+
     Value::from_str(content).unwrap()
 }
 
 async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
     let ws = fastwebsockets::FragmentCollector::new(fut.await?);
     let ax_ws = Arc::new(Mutex::new(ws));
-
     loop {
         let ws_clone = ax_ws.clone();
 
@@ -63,7 +62,10 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
         };
 
         match frame.opcode {
-            OpCode::Close => break,
+            OpCode::Close => {
+                println!("Client disconnected");
+                break;
+            }
             OpCode::Text | OpCode::Binary => {
                 let value = parse_to_value(&frame.payload);
                 if let Some(op) = value.get("op") {
@@ -109,7 +111,7 @@ async fn join_room(message: &Value, websocket: AXController) -> Value {
     let name = message.get("name").unwrap().as_str().unwrap();
     let room = message.get("room").unwrap().as_str().unwrap();
     println!("Player {} join the room: {}", name, room);
-    
+
     let peer_map_clone = PEER_MAP.clone();
     let mut peer_map = peer_map_clone.lock().await;
 
@@ -123,7 +125,7 @@ async fn join_room(message: &Value, websocket: AXController) -> Value {
             let mut ws_map: HashMap<String, AXController> = HashMap::new();
             ws_map.insert(name.to_string(), websocket.clone());
             peer_map.insert(room.to_string(), ws_map);
-            event_bus::emit("AddState", &json!({"name": room}));
+            event_bus::emit("AddState", &json!({ "name": room }));
         }
     }
 
