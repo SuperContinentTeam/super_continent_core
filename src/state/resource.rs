@@ -27,8 +27,8 @@ pub struct StateResource {
     pub technology: Resource,
 }
 
-impl StateResource {
-    pub fn new() -> Self {
+impl Default for StateResource {
+    fn default() -> Self {
         Self {
             energy: Resource {
                 typ: ResourceType::ENERGY,
