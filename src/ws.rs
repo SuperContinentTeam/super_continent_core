@@ -1,7 +1,7 @@
 use fastwebsockets::{upgrade, FragmentCollector, Frame, OpCode, Payload, WebSocketError};
 use hyper::{server::conn::Http, service::service_fn, upgrade::Upgraded, Body, Request, Response};
 use lazy_static::lazy_static;
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::{collections::HashMap, str::FromStr, sync::Arc};
 use tokio::{net::TcpListener, sync::Mutex};
 
@@ -68,13 +68,8 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
             OpCode::Text | OpCode::Binary => {
                 let value = parse_to_value(&frame.payload);
                 if let Some(op) = value.get("op") {
-                    let op = op.as_str().unwrap();
-                    match op {
-                        "join" => {
-                            let result = commander::join_room(value, ax_ws.clone()).await;
-                            send_message(&result, &ax_ws).await;
-                        },
-                        _ => {}
+                    if let Some(op) = op.as_str() {
+                        commander::bypass(op, value.clone(), ax_ws.clone()).await;
                     }
                 }
             }
@@ -85,7 +80,7 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
     Ok(())
 }
 
-async fn send_message(message: &Value, receiver: &AXController) {
+pub async fn send_message(message: &Value, receiver: &AXController) {
     let receiver_clone = receiver.clone();
     let str_message = message.to_string();
     let u8_message = str_message.as_bytes();
@@ -95,7 +90,7 @@ async fn send_message(message: &Value, receiver: &AXController) {
     receiver_guard.write_frame(frame).await.unwrap();
 }
 
-async fn broadcast(room: &str, message: &Value) {
+pub async fn broadcast(room: &str, message: &Value) {
     let peer_map_clone = PEER_MAP.clone();
     let peer_map = peer_map_clone.lock().await;
 
@@ -105,8 +100,3 @@ async fn broadcast(room: &str, message: &Value) {
         }
     }
 }
-
-async fn connect_server(message: Value, websocket: AXController) -> Value {
-    json!({})
-}
-
