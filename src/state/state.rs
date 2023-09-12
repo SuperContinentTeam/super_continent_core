@@ -19,6 +19,7 @@ pub struct State {
     pub max_number: u8,
     pub state_resource: StateResource,
     pub players: Vec<String>,
+    pub pause: bool
 }
 
 impl State {
@@ -29,6 +30,7 @@ impl State {
             max_number,
             state_resource: StateResource::default(),
             players: Vec::new(),
+            pause: true
         }
     }
 
@@ -43,31 +45,16 @@ impl State {
     }
 }
 
-// 新增状态机
-pub async fn add_state(value: Value) -> AXState {
-    let name = value.get("name").unwrap().to_string();
-    let max_number = value.get("maxNumber").unwrap().as_u64().unwrap();
-
-    let state_map_clone = STATE_MAP.clone();
-    let mut state_map = state_map_clone.lock().await;
-
-    let state = Arc::new(Mutex::new(State::new(name.clone(), max_number as u8)));
-
-    state_map.insert(name.clone(), state.clone());
-    tokio::task::spawn(run_state(state.clone()));
-
-    state.clone()
-}
-
 // 运行状态机
-async fn run_state(state: AXState) {
+pub async fn run_state(state: AXState) {
     let state_clone = state.clone();
     let time_flow = TIME_FLOW.clone();
 
     loop {
         let mut s = state_clone.lock().await;
-        s.next();
-
+        if !s.pause {
+            s.next();
+        }
         tokio::time::sleep(time_flow).await;
     }
 }
