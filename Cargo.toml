@@ -13,10 +13,10 @@ lazy_static = "*"
 tokio = {version = "1.4", features = ["full"]}
 fastwebsockets = {version="0.4.4", features= ["upgrade"]}
 hyper = {version="0.14.27", features = ["full"]}
-tokio-sync = "0.1.8"
-
+tungstenite = "0.20.0"
+tokio-tungstenite = "0.20.0"
+futures-util = "0.3.28"
+futures-channel = "0.3.28"
 #futures = { version = "0.3", default-features = false }
 #warp = "0.3"
 #tokio-stream = "0.1.14"
-#futures-util = "0.3.28"
-#tokio-tungstenite = "0.20.0"
