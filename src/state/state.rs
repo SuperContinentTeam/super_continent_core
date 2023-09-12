@@ -1,6 +1,5 @@
 use crate::state::resource::StateResource;
 use lazy_static::lazy_static;
-use serde_json::Value;
 use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::Mutex;

@@ -1,8 +1,8 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use crate::{
     state::state::{self, STATE_MAP},
-    ws::{self, send_message, AXController},
+    ws::{self, send_message, AXController}, db,
 };
 use serde_json::{json, Value};
 use tokio::sync::Mutex;
@@ -22,20 +22,35 @@ async fn join_room(message: Value, websocket: AXController) {
 
             if state.can_join() {
                 state.players.push(name.to_string());
+
+                db::update_room_info(room.to_string(), &json!({
+                    "use_number": state.players.len() as u8,
+                    "max_number": state.max_number,
+                    "pause": state.pause
+                })).await;
+
                 ws::add_client(name.to_string(), websocket.clone()).await;
             }
         }
         None => {
             // 创建并运行 State 状态机
             let max_number = {
-                match message.get("maxNumber") {
+                match message.get("max_number") {
                     Some(v) => v.as_u64().unwrap() as u8,
                     None => 10,
                 }
             };
+
+            db::save_room_info(room.to_string(), db::RoomInfo{
+                use_number: 1,
+                max_number,
+                pause: true
+            }).await;
+
             let mut s = state::State::new(name.to_string(), max_number);
             s.players.push(name.to_string());
             let ax_s = Arc::new(Mutex::new(s));
+
             room_map.insert(room.to_string(), ax_s.clone());
             tokio::task::spawn(state::run_state(ax_s.clone()));
         }
@@ -44,23 +59,7 @@ async fn join_room(message: Value, websocket: AXController) {
 }
 
 async fn query_rooms(websocket: AXController) {
-    let room_map_clone = STATE_MAP.clone();
-    let room_map = room_map_clone.lock().await;
-
-    let mut result: HashMap<String, Value> = HashMap::new();
-    for (room_name, ax_state) in room_map.iter() {
-        let s_clone = ax_state.clone();
-        let s = s_clone.lock().await;
-
-        result.insert(
-            room_name.to_string(),
-            json!({
-                "maxNumber": s.max_number,
-                "useNumber": s.players.len(),
-                "status": "wait"
-            }),
-        );
-    }
+    let result = db::query_all_rooms().await;
     send_message(&json!(result), &websocket).await;
 }
 
