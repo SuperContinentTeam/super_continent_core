@@ -1,4 +1,4 @@
-use crate::state::resource::StateResource;
+use crate::{state::resource::StateResource, ws};
 use lazy_static::lazy_static;
 use std::{collections::HashMap, sync::Arc};
 
@@ -33,14 +33,26 @@ impl State {
         }
     }
 
-    pub fn next(&mut self) {
+    pub async fn next(&mut self) {
         self.tick += 1;
+        self.state_resource.next();
         println!("State: {}, Tick: {}", self.name, self.tick);
+        ws::broadcast(&self.players, &self.to_json()).await;
     }
 
     pub fn can_join(&self) -> bool {
         let use_number = self.players.len() as u8;
         use_number < self.max_number
+    }
+
+    pub fn to_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "tick": self.tick,
+            "name": self.name,
+            "max_number": self.max_number,
+            "players": self.players,
+            "resources": self.state_resource
+        })
     }
 }
 
@@ -52,7 +64,7 @@ pub async fn run_state(state: AXState) {
     loop {
         let mut s = state_clone.lock().await;
         if !s.pause {
-            s.next();
+            s.next().await;
         }
         tokio::time::sleep(time_flow).await;
     }

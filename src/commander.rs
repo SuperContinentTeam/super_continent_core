@@ -51,7 +51,8 @@ async fn join_room(message: Value, websocket: AXController) {
             let mut s = state::State::new(name.to_string(), max_number);
             s.players.push(name.to_string());
             let ax_s = Arc::new(Mutex::new(s));
-
+            ws::add_client(name.to_string(), websocket.clone()).await;
+            
             room_map.insert(room.to_string(), ax_s.clone());
             tokio::task::spawn(state::run_state(ax_s.clone()));
         }

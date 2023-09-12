@@ -1,20 +1,16 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub enum ResourceType {
-    ENERGY,
-    MINERAL,
-    FOOD,
-    CUSTOMER,
-    ALLOY,
-    TECHNOLOGY,
-}
-
-#[derive(Serialize, Deserialize)]
 pub struct Resource {
-    pub typ: ResourceType,
+    pub typ: String,
     pub storage: i64,
     pub daily: i64,
+}
+
+impl Resource {
+    pub fn next(&mut self) {
+        self.storage += self.daily
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -27,36 +23,47 @@ pub struct StateResource {
     pub technology: Resource,
 }
 
+impl StateResource {
+    pub fn next(&mut self) {
+        self.energy.next();
+        self.mineral.next();
+        self.food.next();
+        self.customer.next();
+        self.alloy.next();
+        self.technology.next();
+    }
+}
+
 impl Default for StateResource {
     fn default() -> Self {
         Self {
             energy: Resource {
-                typ: ResourceType::ENERGY,
+                typ: "energy".to_string(),
                 storage: 1000,
                 daily: 10,
             },
             mineral: Resource {
-                typ: ResourceType::MINERAL,
+                typ: "mineral".to_string(),
                 storage: 1000,
                 daily: 10,
             },
             food: Resource {
-                typ: ResourceType::FOOD,
+                typ: "food".to_string(),
                 storage: 1000,
                 daily: 10,
             },
             customer: Resource {
-                typ: ResourceType::CUSTOMER,
+                typ: "customer".to_string(),
                 storage: 500,
                 daily: 5,
             },
             alloy: Resource {
-                typ: ResourceType::ALLOY,
+                typ: "alloy".to_string(),
                 storage: 500,
                 daily: 5,
             },
             technology: Resource {
-                typ: ResourceType::TECHNOLOGY,
+                typ: "technology".to_string(),
                 storage: 300,
                 daily: 3,
             },

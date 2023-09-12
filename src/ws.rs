@@ -97,5 +97,40 @@ pub async fn send_message(message: &Value, receiver: &AXController) {
     let payload = Payload::from(u8_message);
     let frame = Frame::new(true, OpCode::Text, None, payload);
     let mut receiver_guard = receiver_clone.lock().await;
-    receiver_guard.write_frame(frame).await.unwrap();
+    let _ = receiver_guard.write_frame(frame).await;
+}
+
+pub async fn broadcast(players: &Vec<String>, message: &Value) {
+    let str_message = message.to_string();
+    let u8_message = str_message.as_bytes();
+
+    let clients: Vec<AXController> = {
+        let client_map_clone = CLIENT_MAP.clone();
+        let client_map = client_map_clone.lock().await;
+
+        client_map.iter().filter_map(|(x,y)| {
+            if players.contains(x) {
+                Some(y.clone())
+            }else {
+                None
+            }
+        }).collect()
+    };
+    println!("Broadcast: {:#?}", players);
+    println!("Client: {}", clients.len());
+    for client in clients {
+        println!("1");
+        let client_clone = client.clone();
+        let mut client = client_clone.lock().await;
+        println!("2");
+
+        let _ = client
+            .write_frame(Frame::new(
+                true,
+                OpCode::Text,
+                None,
+                Payload::from(u8_message),
+            ))
+            .await;
+    }
 }
