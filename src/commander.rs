@@ -29,7 +29,6 @@ async fn join_room(message: Value, websocket: AXController) {
                     "pause": state.pause,
                     "add_player": name
                 })).await;
-
                 ws::add_client(name.to_string(), websocket.clone()).await;
             }
         }
@@ -57,29 +56,37 @@ async fn join_room(message: Value, websocket: AXController) {
             tokio::task::spawn(state::run_state(ax_s.clone()));
         }
     }
-    send_message(&json!({"status": "success"}), &websocket).await;
 }
 
-async fn query_rooms(websocket: AXController) {
-    let result = db::query_all_rooms().await;
-    send_message(&json!(result), &websocket).await;
+pub async fn update_state(message: Value) {
+    let room = message.get("room").unwrap().as_str().unwrap();
+    let room_map_clone = STATE_MAP.clone();
+    let mut room_map = room_map_clone.lock().await;
+    if let Some(s) = room_map.get_mut(room) {
+        let s_clone = s.clone();
+        let mut s = s_clone.lock().await;
+
+        if let Some(v) = message.get("pause") {
+            s.pause = v.as_bool().unwrap();
+        }
+    }
 }
 
 pub async fn bypass(op: &str, message: Value, websocket: AXController) {
     match op {
-        "join" => {
-            join_room(message, websocket).await;
-        }
+        "join" => join_room(message, websocket).await,
         "query" => {
             if let Some(payload) = message.get("payload") {
                 match payload.as_str().unwrap() {
                     "rooms" => {
-                        query_rooms(websocket).await;
+                        let result = db::query_all_rooms().await;
+                        send_message(&json!(result), &websocket).await;
                     }
                     _ => {}
                 }
             }
-        }
+        },
+        "update" => update_state(message).await,
         _ => {}
     }
 }
