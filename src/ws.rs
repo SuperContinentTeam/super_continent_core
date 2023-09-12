@@ -8,11 +8,12 @@ use tokio::{net::TcpListener, sync::Mutex};
 use crate::commander;
 
 pub type AXController = Arc<Mutex<FragmentCollector<Upgraded>>>;
-pub type PeerMap = Arc<Mutex<HashMap<String, HashMap<String, AXController>>>>;
+
+// 连接表, 键: 玩家名. 值: 连接对象
+pub type ClientMap = Arc<Mutex<HashMap<String, AXController>>>;
 
 lazy_static! {
-    pub static ref PEER_MAP: PeerMap = PeerMap::default();
-    pub static ref CLIENT_MANAGER: ClientManager = ClientManager::new();
+    pub static ref CLIENT_MAP: ClientMap = ClientMap::default();
 }
 
 pub async fn start_server() {
@@ -81,41 +82,11 @@ async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
     Ok(())
 }
 
-pub struct Client {
-    pub ws: AXController,
-}
-
-impl Client {
-    pub fn new(ws: AXController) -> Self {
-        Self { ws }
-    }
-
-    pub async fn send_message(self, message: &Value) {
-        let ws_clone = self.ws.clone();
-
-        let str_message = message.to_string();
-        let u8_message = str_message.as_bytes();
-        let frame = Frame::new(true, OpCode::Text, None, Payload::from(u8_message));
-
-        let mut ws = ws_clone.lock().await;
-        ws.write_frame(frame).await.unwrap();
-    }
-}
-
-pub struct ClientManager {
-    pub peer_map: Arc<Mutex<HashMap<String, Client>>>,
-}
-
-impl ClientManager {
-    pub fn new() -> Self {
-        Self {
-            peer_map: Arc::new(Mutex::new(HashMap::new())),
-        }
-    }
-
-    pub async fn broadcast(&self, message: &Value) {
-        let peer_map_clone = self.peer_map.clone();
-        let peer_map = peer_map_clone.lock().await;
+pub async fn add_client(name: String, ws: AXController) {
+    let client_map_clone = CLIENT_MAP.clone();
+    let mut client_map = client_map_clone.lock().await;
+    if !client_map.contains_key(&name) {
+        client_map.insert(name, ws);
     }
 }
 
@@ -127,15 +98,4 @@ pub async fn send_message(message: &Value, receiver: &AXController) {
     let frame = Frame::new(true, OpCode::Text, None, payload);
     let mut receiver_guard = receiver_clone.lock().await;
     receiver_guard.write_frame(frame).await.unwrap();
-}
-
-pub async fn broadcast(room: &str, message: &Value) {
-    let peer_map_clone = PEER_MAP.clone();
-    let peer_map = peer_map_clone.lock().await;
-
-    if let Some(ws_map) = peer_map.get(room) {
-        for ws in ws_map.values() {
-            send_message(message, ws).await;
-        }
-    }
 }

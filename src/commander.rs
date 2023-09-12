@@ -1,40 +1,42 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use serde_json::{json, Value};
-
+use tokio::sync::Mutex;
+use lazy_static::lazy_static;
 use crate::{
     state::state::{self, AXState},
-    ws::{send_message, AXController, PEER_MAP},
+    ws::{send_message, AXController, self},
 };
+// 房间表
+pub type RoomMap = Arc<Mutex<HashMap<String, AXState>>>;
+lazy_static!{
+    pub static ref ROOM_MAP: RoomMap = RoomMap::default();
+}
 
 async fn join_room(message: Value, websocket: AXController) {
     let name = message.get("name").unwrap().as_str().unwrap();
     let room = message.get("room").unwrap().as_str().unwrap();
     println!("Player {} join the room: {}", name, room);
 
-    let peer_map_clone = PEER_MAP.clone();
-    let mut peer_map = peer_map_clone.lock().await;
+    let room_map_clone = ROOM_MAP.clone();
+    let mut room_map = room_map_clone.lock().await;
 
-    match peer_map.get_mut(room) {
-        Some(ws_map) => {
-            if let Some(s) = state::check_state(room).await {
-                if !ws_map.contains_key(name) {
-                    ws_map.insert(name.to_string(), websocket.clone());
-                    let s = s.clone();
-                    let mut state = s.lock().await;
-                    
-                    state.use_number += 1;
-                    state.players.push(name.to_string());
-                }
+    match room_map.get_mut(room) {
+        Some(state) => {
+            let state = state.clone();
+            let mut state = state.lock().await;
+
+            if state.can_join() {
+                state.players.push(name.to_string());
+                ws::add_client(name.to_string(), websocket.clone()).await;
             }
         }
         None => {
-            let mut ws_map: HashMap<String, AXController> = HashMap::new();
-            ws_map.insert(name.to_string(), websocket.clone());
-            peer_map.insert(room.to_string(), ws_map);
-
             // 创建并运行 State 状态机
-            state::add_state(message.clone()).await;
+            let s = state::add_state(message.clone()).await;
+            
+            ws::add_client(name.to_string(), websocket.clone()).await;
+            room_map.insert(room.to_string(), s.clone());
         }
     }
 
