@@ -26,7 +26,8 @@ async fn join_room(message: Value, websocket: AXController) {
                 db::update_room_info(room.to_string(), &json!({
                     "use_number": state.players.len() as u8,
                     "max_number": state.max_number,
-                    "pause": state.pause
+                    "pause": state.pause,
+                    "add_player": name
                 })).await;
 
                 ws::add_client(name.to_string(), websocket.clone()).await;
@@ -44,7 +45,8 @@ async fn join_room(message: Value, websocket: AXController) {
             db::save_room_info(room.to_string(), db::RoomInfo{
                 use_number: 1,
                 max_number,
-                pause: true
+                pause: true,
+                players: vec![name.to_string()]
             }).await;
 
             let mut s = state::State::new(name.to_string(), max_number);
