@@ -1,8 +1,11 @@
-use crate::{state::resource::StateResource, ws};
 use lazy_static::lazy_static;
 use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::Mutex;
+
+use crate::ws::{send_message, get_clients};
+
+use super::player::Player;
 
 pub type AXState = Arc<Mutex<State>>;
 // RoomName -> State
@@ -17,9 +20,8 @@ pub struct State {
     pub tick: u64,
     pub name: String,
     pub max_number: u8,
-    pub state_resource: StateResource,
-    pub players: Vec<String>,
-    pub status: u8 // 0: pause, 1: running, 2: exit
+    pub players: HashMap<String, Player>,
+    pub status: u8, // 0: pause, 1: running, 2: exit
 }
 
 impl State {
@@ -28,15 +30,16 @@ impl State {
             tick: 0,
             name,
             max_number,
-            state_resource: StateResource::default(),
-            players: Vec::new(),
-            status: 0
+            players: HashMap::new(),
+            status: 0,
         }
     }
 
     pub async fn next(&mut self) {
         self.tick += 1;
-        self.state_resource.next();
+        for (_ , player) in self.players.iter_mut() {
+            player.next();
+        }
         println!("State: {}, Tick: {}", self.name, self.tick);
     }
 
@@ -46,27 +49,35 @@ impl State {
             return 1;
         }
 
-        if self.players.contains(&player) {
+        if self.players.contains_key(&player) {
             return 2;
         }
 
         0
     }
 
-    pub fn dumps(&self) -> String {
+    pub fn dump_by_one(&self, name: &String) -> String {
+        let player = self.players.get(name).unwrap();
         let results = vec![
-            self.name.clone(),
             self.tick.to_string(),
-            self.max_number.to_string(),
-            self.players.join(":"),
-            self.state_resource.dumps(),
+            player.dumps()
         ];
 
         results.join(";")
     }
 
     pub fn remove_player(&mut self, player: String) {
-        self.players.retain(|x| x != &player);
+        self.players.remove(&player);
+    }
+
+    pub async fn broadcast(&self) {
+        let clients= get_clients(self.players.keys()).await;
+        for (name, _) in self.players.iter() {
+            let message = self.dump_by_one(name);
+            if let Some(c) = clients.get(name) {
+                tokio::task::spawn(send_message(message, c.clone()));
+            }
+        }
     }
 }
 
@@ -78,9 +89,8 @@ pub async fn run_state(state: AXState) {
     loop {
         let mut s = state_clone.lock().await;
         if s.status == 1 {
+            s.broadcast().await;
             s.next().await;
-            ws::broadcast(&s.players, s.dumps()).await;
-            // ws::broadcast(&s.players, &s.to_json()).await;
         } else if s.status == 2 {
             break;
         }

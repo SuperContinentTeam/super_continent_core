@@ -1,4 +1,11 @@
-use crate::{commander, db::USER_IN_ROOM, state::state::STATE_MAP};
+use crate::{
+    commander,
+    db::USER_IN_ROOM,
+    state::{
+        player::Player,
+        state::{AXState, STATE_MAP},
+    },
+};
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use lazy_static::lazy_static;
@@ -71,32 +78,25 @@ pub async fn process_message_from_client(msg: Message, client: AxClient) {
 }
 
 pub async fn send_message(msg: String, tx: AxClient) {
-    let _ = tx
-        .lock()
-        .await
-        .tx
-        .unbounded_send(Message::Text(msg));
+    let _ = tx.lock().await.tx.unbounded_send(Message::Text(msg));
 }
 
-pub async fn broadcast(players: &Vec<String>, msg: String) {
-    let clients = {
-        let mut result: Vec<AxClient> = Vec::new();
-        let peer_map = PEER_MAP.lock().await;
-        let peer_user_map = PEER_USER_MAP.lock().await;
-        for player in players {
-            if let Some(addr) = peer_user_map.get(player) {
-                if let Some(c) = peer_map.get(addr) {
-                    result.push(c.clone());
-                }
+pub async fn get_clients(names: impl Iterator<Item = &String>) -> HashMap<String, AxClient> {
+    let peer_map = PEER_MAP.lock().await;
+    let peer_user_map = PEER_USER_MAP.lock().await;
+    let mut result: HashMap<String, AxClient> = HashMap::new();
+
+    for name in names {
+        if let Some(socket_addr) = peer_user_map.get(name) {
+            if let Some(client) = peer_map.get(socket_addr) {
+                result.insert(name.clone(), client.clone());
             }
         }
-        result
-    };
-
-    for client in clients {
-        tokio::task::spawn(send_message(msg.clone(), client));
     }
+
+    result
 }
+
 
 async fn close_and_stop_state(addr: SocketAddr) {
     let mut peer_user_map = PEER_USER_MAP.lock().await;

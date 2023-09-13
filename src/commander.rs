@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     db::{self, USER_IN_ROOM},
-    state::state::{self, STATE_MAP},
+    state::{state::{self, STATE_MAP}, player::Player},
     ws::{send_message, AxClient, PEER_USER_MAP},
 };
 use serde_json::json;
@@ -22,7 +22,7 @@ pub async fn join_room(room: &str, name: &str, client: AxClient) {
             let can_join = ax_s.can_join(name.to_string());
             match can_join {
                 0 => {
-                    ax_s.players.push(name.to_string());
+                    ax_s.players.insert(name.to_string(), Player::new(name.to_string()));
 
                     let use_number = ax_s.players.len() as u8;
                     db::update_room_info(
@@ -58,7 +58,7 @@ pub async fn join_room(room: &str, name: &str, client: AxClient) {
 
             // 创建并运行 State 状态机
             let mut s = state::State::new(room.to_string(), max_number);
-            s.players.push(name.to_string());
+            s.players.insert(name.to_string(), Player::new(name.to_string()));
 
             let ax_s = Arc::new(Mutex::new(s));
 
