@@ -15,3 +15,11 @@
     "pause": false
 }
 ```
+
+# 查询房间
+```json
+{
+    "op": "query",
+    "payload": "rooms"
+}
+```

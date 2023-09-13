@@ -1,136 +1,80 @@
-use fastwebsockets::{upgrade, FragmentCollector, Frame, OpCode, Payload, WebSocketError};
-use hyper::{server::conn::Http, service::service_fn, upgrade::Upgraded, Body, Request, Response};
+use crate::commander;
+use futures_channel::mpsc::{unbounded, UnboundedSender};
+use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use lazy_static::lazy_static;
 use serde_json::Value;
-use std::{collections::HashMap, str::FromStr, sync::Arc};
-use tokio::{net::TcpListener, sync::Mutex};
+use std::{collections::HashMap, net::SocketAddr, str::FromStr, sync::Arc};
+use tokio::{net::TcpStream, sync::Mutex};
+use tokio_tungstenite::tungstenite::protocol::Message;
 
-use crate::commander;
+pub type Tx = UnboundedSender<Message>;
 
-pub type AXController = Arc<Mutex<FragmentCollector<Upgraded>>>;
+pub struct Client {
+    pub tx: Tx,
+    pub addr: SocketAddr
+}
 
-// 连接表, 键: 玩家名. 值: 连接对象
-pub type ClientMap = Arc<Mutex<HashMap<String, AXController>>>;
+pub type AxClient = Arc<Mutex<Client>>;
+pub type PeerMap = Arc<Mutex<HashMap<SocketAddr, AxClient>>>;
+pub type PeerUserMap = Arc<Mutex<HashMap<String, SocketAddr>>>;
 
 lazy_static! {
-    pub static ref CLIENT_MAP: ClientMap = ClientMap::default();
+    pub static ref PEER_MAP: PeerMap = PeerMap::default();
+    pub static ref PEER_USER_MAP: PeerUserMap = PeerUserMap::default();
 }
 
-pub async fn start_server() {
-    let bind_addr = "0.0.0.0:7000".to_string();
-    println!("Start Server in: {:?}", bind_addr);
-    let listener = TcpListener::bind(&bind_addr).await.unwrap();
-    loop {
-        let (stream, client_addr) = listener.accept().await.unwrap();
-        println!("Client connected: {}", client_addr);
-        tokio::spawn(async move {
-            let conn_fut = Http::new()
-                .serve_connection(stream, service_fn(server_upgrade))
-                .with_upgrades();
-            if let Err(e) = conn_fut.await {
-                println!("An error occurred: {:?}", e);
-            }
-        });
-    }
-}
+pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr) {
+    println!("Incoming TCP connection from: {}", addr);
 
-async fn server_upgrade(mut req: Request<Body>) -> Result<Response<Body>, WebSocketError> {
-    let (response, fut) = upgrade::upgrade(&mut req)?;
-    tokio::task::spawn(async move {
-        if let Err(e) = tokio::task::unconstrained(handle_client(fut)).await {
-            eprintln!("Error in websocket connection: {}", e);
-        }
+    let ws_stream = tokio_tungstenite::accept_async(raw_stream)
+        .await
+        .expect("Error during the websocket handshake occurred");
+    println!("WebSocket connection established: {}", addr);
+
+    // tx 用于发送数据到数据流中，而 rx 用于从数据流中接收数据
+    let (tx, rx) = unbounded();
+    let client = Client {
+        addr: addr.clone(),
+        tx
+    };
+    let ax_client = Arc::new(Mutex::new(client));
+
+    PEER_MAP.lock().await.insert(addr, ax_client.clone());
+
+    // outgoing 用于发送数据到 WebSocket 连接，incoming 用于接收从 WebSocket 连接接收到的数据
+    let (outgoing, incoming) = ws_stream.split();
+    let receive_from = incoming.try_for_each(move |msg| {
+        tokio::task::spawn(process_message_from_client(msg, ax_client.clone()));
+        future::ok(())
     });
 
-    Ok(response)
+    // 使用tx发送数据, rx会收到数据, 然后把数据流转发给outgoing, 从而实现发送消息的功能
+    let send_from = rx.map(Ok).forward(outgoing);
+
+    pin_mut!(receive_from, send_from);
+    future::select(receive_from, send_from).await;
+    println!("{} disconnected", &addr);
+    PEER_MAP.lock().await.remove(&addr);
 }
 
-fn parse_to_value(payload: &Payload) -> Value {
-    let u8_content = payload.to_vec();
-    let content = std::str::from_utf8(&u8_content).unwrap();
-
-    Value::from_str(content).unwrap()
-}
-
-async fn handle_client(fut: upgrade::UpgradeFut) -> Result<(), WebSocketError> {
-    let ws = fastwebsockets::FragmentCollector::new(fut.await?);
-    let ax_ws = Arc::new(Mutex::new(ws));
-
-    loop {
-        let frame = {
-            let mut ws_gurand = ax_ws.lock().await;
-            ws_gurand.read_frame().await?
-        };
-
-        match frame.opcode {
-            OpCode::Close => {
-                println!("Client disconnected");
-                break;
+pub async fn process_message_from_client(msg: Message, client: AxClient) {
+    if let Ok(message) = parse_to_value(&msg) {
+        if let Some(op) = message.get("op") {
+            if let Some(str_op) = op.as_str() {
+                commander::bypass(str_op, message.clone(), client.clone()).await
             }
-            OpCode::Text | OpCode::Binary => {
-                let value = parse_to_value(&frame.payload);
-                if let Some(op) = value.get("op") {
-                    if let Some(op) = op.as_str() {
-                        commander::bypass(op, value.clone(), ax_ws.clone()).await;
-                    }
-                }
-            }
-            _ => {}
         }
     }
-
-    Ok(())
 }
 
-pub async fn add_client(name: String, ws: AXController) {
-    let client_map_clone = CLIENT_MAP.clone();
-    let mut client_map = client_map_clone.lock().await;
-    if !client_map.contains_key(&name) {
-        client_map.insert(name, ws);
-    }
+fn parse_to_value(message: &Message) -> Result<Value, serde_json::Error> {
+    let u8_content = message.to_text().unwrap().as_bytes();
+    let content = std::str::from_utf8(&u8_content).unwrap();
+
+    Value::from_str(content)
 }
 
-pub async fn send_message(message: &Value, receiver: &AXController) {
-    let receiver_clone = receiver.clone();
-    let str_message = message.to_string();
-    let u8_message = str_message.as_bytes();
-    let payload = Payload::from(u8_message);
-    let frame = Frame::new(true, OpCode::Text, None, payload);
-    let mut receiver_guard = receiver_clone.lock().await;
-    let _ = receiver_guard.write_frame(frame).await;
-}
-
-pub async fn broadcast(players: &Vec<String>, message: &Value) {
-    let str_message = message.to_string();
-    let u8_message = str_message.as_bytes();
-
-    let clients: Vec<AXController> = {
-        let client_map_clone = CLIENT_MAP.clone();
-        let client_map = client_map_clone.lock().await;
-
-        client_map.iter().filter_map(|(x,y)| {
-            if players.contains(x) {
-                Some(y.clone())
-            }else {
-                None
-            }
-        }).collect()
-    };
-    println!("Broadcast: {:#?}", players);
-    println!("Client: {}", clients.len());
-    for client in clients {
-        println!("1");
-        let client_clone = client.clone();
-        let mut client = client_clone.lock().await;
-        println!("2");
-
-        let _ = client
-            .write_frame(Frame::new(
-                true,
-                OpCode::Text,
-                None,
-                Payload::from(u8_message),
-            ))
-            .await;
-    }
+pub async fn send_message(msg: &Value, tx: AxClient) {
+    let str_message = msg.to_string();
+    let _ = tx.lock().await.tx.unbounded_send(Message::Text(str_message));
 }

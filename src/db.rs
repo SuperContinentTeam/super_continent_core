@@ -18,11 +18,11 @@ lazy_static! {
     pub static ref DB: RoomInfoMap = RoomInfoMap::default();
 }
 
-pub async fn save_room_info(name: String, info: RoomInfo) {
+pub async fn save_room_info(name: &str, info: RoomInfo) {
     let db_clone = DB.clone();
     let mut db = db_clone.lock().await;
-    if !db.contains_key(&name) {
-        db.insert(name, info);
+    if !db.contains_key(name) {
+        db.insert(name.to_string(), info);
     }
 }
 
@@ -33,10 +33,10 @@ pub async fn query_all_rooms() -> Value {
     json!(*db)
 }
 
-pub async fn update_room_info(name: String, value: &Value) {
+pub async fn update_room_info(name: &str, value: &Value) {
     let db_clone = DB.clone();
     let mut db = db_clone.lock().await;
-    let room_info = db.get_mut(&name);
+    let room_info = db.get_mut(name);
     if room_info.is_none() {
         return;
     }

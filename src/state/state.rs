@@ -37,7 +37,7 @@ impl State {
         self.tick += 1;
         self.state_resource.next();
         println!("State: {}, Tick: {}", self.name, self.tick);
-        ws::broadcast(&self.players, &self.to_json()).await;
+        // ws::broadcast(&self.players, &self.to_json()).await;
     }
 
     pub fn can_join(&self) -> bool {
