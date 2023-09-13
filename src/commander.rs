@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use crate::{
     db::{self, USER_IN_ROOM},
-    state::{state::{self, STATE_MAP}, player::Player},
+    state::{
+        player::Player,
+        state::{self, STATE_MAP},
+    },
     ws::{send_message, AxClient, PEER_USER_MAP},
 };
 use serde_json::json;
@@ -12,67 +15,68 @@ use tungstenite::Message;
 pub async fn join_room(room: &str, name: &str, client: AxClient) {
     println!("Player {} join the room: {}", name, room);
     let c = client.lock().await;
+    println!("1");
     let mut room_map = STATE_MAP.lock().await;
+    println!("2");
 
-    match room_map.get_mut(room) {
-        Some(s) => {
-            let s_clone = s.clone();
-            let mut ax_s = s_clone.lock().await;
+    let st = {
+        match room_map.get_mut(room) {
+            Some(s) => s.clone(),
+            None => {
+                let max_number = 10;
+                // 缓存
+                db::save_room_info(
+                    room,
+                    db::RoomInfo {
+                        use_number: 0, // 设为0 为了降低代码重复性 在后面采用更新的方式写入1
+                        max_number,
+                        status: 0,
+                        players: vec![name.to_string()],
+                    },
+                )
+                .await;
+                println!("3");
+                // 创建并运行 State 状态机
+                let s = state::State::new(room.to_string(), max_number);
+                println!("4");
+                let ax_s = Arc::new(Mutex::new(s));
 
-            let can_join = ax_s.can_join(name.to_string());
-            match can_join {
-                0 => {
-                    ax_s.players.insert(name.to_string(), Player::new(name.to_string()));
+                tokio::task::spawn(state::run_state(ax_s.clone()));
+                println!("5");
+                room_map.insert(room.to_string(), ax_s.clone());
 
-                    let use_number = ax_s.players.len() as u8;
-                    db::update_room_info(
-                        name,
-                        &json!({"use_number": use_number, "add_player": name}),
-                    )
-                    .await;
-
-                    // 保存用户与连接ip的对应关系
-                    PEER_USER_MAP
-                        .lock()
-                        .await
-                        .insert(name.to_string(), c.addr.clone());
-
-                    // 保存用户与房间的对应关系 方便查询
-                    USER_IN_ROOM.lock().await.insert(name.to_string(), room.to_string());
-                }
-                _ => {
-                    let _ = c.tx.unbounded_send(Message::Text(can_join.to_string()));
-                }
-            };
+                ax_s
+            }
         }
-        None => {
-            let max_number = 10;
+    };
 
-            let rf = db::RoomInfo {
-                use_number: 1,
-                max_number,
-                status: 0,
-                players: vec![name.to_string()],
-            };
-            db::save_room_info(room, rf).await;
-
-            // 创建并运行 State 状态机
-            let mut s = state::State::new(room.to_string(), max_number);
-            s.players.insert(name.to_string(), Player::new(name.to_string()));
-
-            let ax_s = Arc::new(Mutex::new(s));
-
-            PEER_USER_MAP
-                .lock()
-                .await
-                .insert(name.to_string(), c.addr.clone());
-            USER_IN_ROOM.lock().await.insert(name.to_string(), room.to_string());
-
-            room_map.insert(room.to_string(), ax_s.clone());
-
-            tokio::task::spawn(state::run_state(ax_s.clone()));
-        }
+    let mut s = st.lock().await;
+    println!("6");
+    let can_join: u8 = s.can_join(name);
+    println!("7, {}", can_join);
+    if can_join != 0 {
+        let _ = c.tx.unbounded_send(Message::Text(can_join.to_string()));
+        return;
     }
+    println!("9");
+    s.players
+        .insert(name.to_string(), Player::new(name.to_string()));
+
+    let use_number = s.players.len() as u8;
+    db::update_room_info(name, &json!({"use_number": use_number, "add_player": name})).await;
+
+    // 保存用户与连接ip的对应关系
+    PEER_USER_MAP
+        .lock()
+        .await
+        .insert(name.to_string(), c.addr.clone());
+
+    // 保存用户与房间的对应关系 方便查询
+    USER_IN_ROOM
+        .lock()
+        .await
+        .insert(name.to_string(), room.to_string());
+    
 }
 
 pub async fn update_status(room: &str, status: &str) {

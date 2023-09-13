@@ -43,13 +43,13 @@ impl State {
         println!("State: {}, Tick: {}", self.name, self.tick);
     }
 
-    pub fn can_join(&self, player: String) -> u8 {
+    pub fn can_join(&self, player: &str) -> u8 {
         let use_number = self.players.len() as u8;
-        if use_number < self.max_number {
+        if use_number >= self.max_number {
             return 1;
         }
 
-        if self.players.contains_key(&player) {
+        if self.players.contains_key(player) {
             return 2;
         }
 
