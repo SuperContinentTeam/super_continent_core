@@ -5,7 +5,7 @@ use tokio::sync::Mutex;
 
 use crate::ws::{send_message, get_clients};
 
-use super::player::Player;
+use super::{player::Player, world::World};
 
 pub type AXState = Arc<Mutex<State>>;
 // RoomName -> State
@@ -19,19 +19,21 @@ lazy_static! {
 pub struct State {
     pub tick: u64,
     pub name: String,
-    pub max_number: u8,
+    pub max_number: i32,
     pub players: HashMap<String, Player>,
-    pub status: u8, // 0: pause, 1: running, 2: exit
+    pub status: i32, // 0: pause, 1: running, 2: exit
+    pub world: World,
 }
 
 impl State {
-    pub fn new(name: String, max_number: u8) -> Self {
+    pub fn new(name: String, max_number: i32, world_width: i32) -> Self {
         State {
             tick: 0,
             name,
             max_number,
             players: HashMap::new(),
             status: 0,
+            world: World::new(world_width),
         }
     }
 
@@ -44,15 +46,16 @@ impl State {
     }
 
     pub fn add_player(&mut self, name: &str) {
-        self.players.insert(name.to_string(), Player::new(name.to_string()));
+        let player = Player::new(name.to_string());
+        self.players.insert(name.to_string(), player);
     }
 
     pub fn remove_player(&mut self, player: String) {
         self.players.remove(&player);
     }
 
-    pub fn can_join(&self, player: &str) -> u8 {
-        let use_number = self.players.len() as u8;
+    pub fn can_join(&self, player: &str) -> i32 {
+        let use_number = self.players.len() as i32;
         if use_number >= self.max_number {
             return 1;
         }

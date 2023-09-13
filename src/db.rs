@@ -6,9 +6,9 @@ use tokio::sync::Mutex;
 
 #[derive(Serialize)]
 pub struct RoomInfo {
-    pub use_number: u8,
-    pub max_number: u8,
-    pub status: u8,
+    pub use_number: i32,
+    pub max_number: i32,
+    pub status: i32,
     pub players: Vec<String>,
 }
 
@@ -45,15 +45,15 @@ pub async fn update_room_info(name: &str, value: &Value) {
     let room_info = room_info.unwrap();
 
     if let Some(v) = value.get("use_number") {
-        room_info.use_number = v.as_u64().unwrap() as u8;
+        room_info.use_number = v.as_u64().unwrap() as i32;
     }
 
     if let Some(v) = value.get("max_number") {
-        room_info.max_number = v.as_u64().unwrap() as u8;
+        room_info.max_number = v.as_u64().unwrap() as i32;
     }
 
     if let Some(v) = value.get("status") {
-        room_info.status = v.as_u64().unwrap() as u8;
+        room_info.status = v.as_u64().unwrap() as i32;
     }
 
     if let Some(v) = value.get("add_player") {
