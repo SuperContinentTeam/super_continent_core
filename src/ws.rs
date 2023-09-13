@@ -1,9 +1,9 @@
-use crate::commander;
+use crate::{commander, state::state::STATE_MAP};
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use lazy_static::lazy_static;
 use serde_json::Value;
-use std::{collections::HashMap, net::SocketAddr, str::FromStr, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
@@ -11,7 +11,7 @@ pub type Tx = UnboundedSender<Message>;
 
 pub struct Client {
     pub tx: Tx,
-    pub addr: SocketAddr
+    pub addr: SocketAddr,
 }
 
 pub type AxClient = Arc<Mutex<Client>>;
@@ -35,7 +35,7 @@ pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr) {
     let (tx, rx) = unbounded();
     let client = Client {
         addr: addr.clone(),
-        tx
+        tx,
     };
     let ax_client = Arc::new(Mutex::new(client));
 
@@ -54,27 +54,75 @@ pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr) {
     pin_mut!(receive_from, send_from);
     future::select(receive_from, send_from).await;
     println!("{} disconnected", &addr);
+
     PEER_MAP.lock().await.remove(&addr);
+    tokio::task::spawn(close_and_stop_state(addr.clone()));
 }
 
 pub async fn process_message_from_client(msg: Message, client: AxClient) {
-    if let Ok(message) = parse_to_value(&msg) {
-        if let Some(op) = message.get("op") {
-            if let Some(str_op) = op.as_str() {
-                commander::bypass(str_op, message.clone(), client.clone()).await
-            }
+    match msg {
+        Message::Binary(msg) => {
+            commander::bypass_binary(std::str::from_utf8(&msg).unwrap(), client.clone()).await
         }
+        Message::Ping(v) => {
+            let _ = client.lock().await.tx.unbounded_send(Message::Pong(v));
+        }
+        _ => {}
     }
 }
 
-fn parse_to_value(message: &Message) -> Result<Value, serde_json::Error> {
-    let u8_content = message.to_text().unwrap().as_bytes();
-    let content = std::str::from_utf8(&u8_content).unwrap();
-
-    Value::from_str(content)
+pub async fn send_message(msg: Value, tx: AxClient) {
+    let str_message = msg.to_string();
+    let _ = tx
+        .lock()
+        .await
+        .tx
+        .unbounded_send(Message::Text(str_message));
 }
 
-pub async fn send_message(msg: &Value, tx: AxClient) {
-    let str_message = msg.to_string();
-    let _ = tx.lock().await.tx.unbounded_send(Message::Text(str_message));
+pub async fn broadcast(players: &Vec<String>, msg: &Value) {
+    let clients = {
+        let mut result: Vec<AxClient> = Vec::new();
+        let peer_map = PEER_MAP.lock().await;
+        let peer_user_map = PEER_USER_MAP.lock().await;
+        for player in players {
+            if let Some(addr) = peer_user_map.get(player) {
+                if let Some(c) = peer_map.get(addr) {
+                    result.push(c.clone());
+                }
+            }
+        }
+        result
+    };
+
+    for client in clients {
+        tokio::task::spawn(send_message(msg.clone(), client));
+    }
+}
+
+async fn close_and_stop_state(addr: SocketAddr) {
+    let mut peer_user_map = PEER_USER_MAP.lock().await;
+
+    let user = {
+        let mut result: Option<String> = None;
+        for (u, a) in peer_user_map.iter() {
+            if a == &addr {
+                result = Some(u.to_string());
+                break;
+            }
+        }
+        result
+    };
+    if let Some(u) = user {
+        peer_user_map.remove(&u);
+
+        let mut state_map = STATE_MAP.lock().await;
+        if let Some(ax_s) = state_map.get(&u) {
+            let mut s = ax_s.lock().await;
+            if s.players.len() == 0 {
+                s.status = 2;
+            }
+        }
+        state_map.remove(&u);
+    }
 }

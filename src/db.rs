@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 pub struct RoomInfo {
     pub use_number: u8,
     pub max_number: u8,
-    pub pause: bool,
+    pub status: u8,
     pub players: Vec<String>
 }
 
@@ -50,8 +50,8 @@ pub async fn update_room_info(name: &str, value: &Value) {
         room_info.max_number = v.as_u64().unwrap() as u8;
     }
 
-    if let Some(v) = value.get("pause") {
-        room_info.pause = v.as_bool().unwrap();
+    if let Some(v) = value.get("status") {
+        room_info.status = v.as_u64().unwrap() as u8;
     }
 
     if let Some(v) = value.get("add_player") {

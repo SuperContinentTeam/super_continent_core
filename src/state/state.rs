@@ -5,6 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
 pub type AXState = Arc<Mutex<State>>;
+// RoomName -> State
 type StateMap = Arc<Mutex<HashMap<String, AXState>>>;
 
 lazy_static! {
@@ -18,7 +19,7 @@ pub struct State {
     pub max_number: u8,
     pub state_resource: StateResource,
     pub players: Vec<String>,
-    pub pause: bool
+    pub status: u8 // 0: pause, 1: running, 2: exit
 }
 
 impl State {
@@ -29,7 +30,7 @@ impl State {
             max_number,
             state_resource: StateResource::default(),
             players: Vec::new(),
-            pause: true
+            status: 0
         }
     }
 
@@ -37,7 +38,6 @@ impl State {
         self.tick += 1;
         self.state_resource.next();
         println!("State: {}, Tick: {}", self.name, self.tick);
-        // ws::broadcast(&self.players, &self.to_json()).await;
     }
 
     pub fn can_join(&self) -> bool {
@@ -63,8 +63,11 @@ pub async fn run_state(state: AXState) {
 
     loop {
         let mut s = state_clone.lock().await;
-        if !s.pause {
+        if s.status == 1 {
             s.next().await;
+            ws::broadcast(&s.players, &s.to_json()).await;
+        } else if s.status == 2 {
+            break;
         }
         tokio::time::sleep(time_flow).await;
     }
