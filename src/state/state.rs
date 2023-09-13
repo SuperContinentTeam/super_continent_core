@@ -43,6 +43,14 @@ impl State {
         println!("State: {}, Tick: {}", self.name, self.tick);
     }
 
+    pub fn add_player(&mut self, name: &str) {
+        self.players.insert(name.to_string(), Player::new(name.to_string()));
+    }
+
+    pub fn remove_player(&mut self, player: String) {
+        self.players.remove(&player);
+    }
+
     pub fn can_join(&self, player: &str) -> u8 {
         let use_number = self.players.len() as u8;
         if use_number >= self.max_number {
@@ -66,9 +74,7 @@ impl State {
         results.join(";")
     }
 
-    pub fn remove_player(&mut self, player: String) {
-        self.players.remove(&player);
-    }
+
 
     pub async fn broadcast(&self) {
         let clients= get_clients(self.players.keys()).await;

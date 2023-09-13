@@ -54,11 +54,8 @@ pub async fn join_room(room: &str, name: &str, client: AxClient) {
         return;
     }
 
-    s.players
-        .insert(name.to_string(), Player::new(name.to_string()));
-
-    let use_number = s.players.len() as u8;
-    db::update_room_info(name, &json!({"use_number": use_number, "add_player": name})).await;
+    s.add_player(name);
+    db::update_room_info(name, &json!({"use_number": s.players.len(), "add_player": name})).await;
 
     // 保存用户与连接ip的对应关系
     PEER_USER_MAP
