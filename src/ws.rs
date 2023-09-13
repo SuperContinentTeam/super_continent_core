@@ -1,4 +1,4 @@
-use crate::{commander, state::state::STATE_MAP};
+use crate::{commander, state::state::STATE_MAP, db::USER_IN_ROOM};
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use lazy_static::lazy_static;
@@ -67,6 +67,9 @@ pub async fn process_message_from_client(msg: Message, client: AxClient) {
         Message::Ping(v) => {
             let _ = client.lock().await.tx.unbounded_send(Message::Pong(v));
         }
+        Message::Close(_v) => {
+            println!("Closed");
+        }
         _ => {}
     }
 }
@@ -102,27 +105,38 @@ pub async fn broadcast(players: &Vec<String>, msg: &Value) {
 
 async fn close_and_stop_state(addr: SocketAddr) {
     let mut peer_user_map = PEER_USER_MAP.lock().await;
+    let mut state_map = STATE_MAP.lock().await;
+    let mut u_in_room = USER_IN_ROOM.lock().await;
 
-    let user = {
-        let mut result: Option<String> = None;
-        for (u, a) in peer_user_map.iter() {
-            if a == &addr {
-                result = Some(u.to_string());
-                break;
-            }
+    let mut user = String::new();
+    for (u, a) in peer_user_map.iter() {
+        if a == &addr {
+            user = u.clone();
         }
-        result
-    };
-    if let Some(u) = user {
-        peer_user_map.remove(&u);
+    }
+    if user.is_empty() {
+        return
+    }
 
-        let mut state_map = STATE_MAP.lock().await;
-        if let Some(ax_s) = state_map.get(&u) {
-            let mut s = ax_s.lock().await;
+    peer_user_map.remove(&user);
+
+    if let Some(room) = u_in_room.remove(&user) {
+        let st = state_map.get(&room);
+        let mut ensure_remove = false;
+
+        if st.is_some() {
+            let mut s = st.unwrap().lock().await;
+
+            s.remove_player(user);
             if s.players.len() == 0 {
+                println!("E");
                 s.status = 2;
+                ensure_remove = true;
             }
         }
-        state_map.remove(&u);
+
+        if ensure_remove {
+            state_map.remove(&room);
+        }
     }
 }

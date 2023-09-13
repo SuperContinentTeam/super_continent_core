@@ -1,7 +1,7 @@
-use std::{collections::HashMap, sync::Arc};
-use serde::Serialize;
 use lazy_static::lazy_static;
-use serde_json::{Value, json};
+use serde::Serialize;
+use serde_json::{json, Value};
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
 #[derive(Serialize)]
@@ -9,13 +9,15 @@ pub struct RoomInfo {
     pub use_number: u8,
     pub max_number: u8,
     pub status: u8,
-    pub players: Vec<String>
+    pub players: Vec<String>,
 }
 
 type RoomInfoMap = Arc<Mutex<HashMap<String, RoomInfo>>>;
+type UserInRoomMap = Arc<Mutex<HashMap<String, String>>>;
 
 lazy_static! {
     pub static ref DB: RoomInfoMap = RoomInfoMap::default();
+    pub static ref USER_IN_ROOM: UserInRoomMap = UserInRoomMap::default();
 }
 
 pub async fn save_room_info(name: &str, info: RoomInfo) {

@@ -1,6 +1,6 @@
 use crate::{state::resource::StateResource, ws};
 use lazy_static::lazy_static;
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, ops::Index};
 
 use tokio::sync::Mutex;
 
@@ -40,9 +40,17 @@ impl State {
         println!("State: {}, Tick: {}", self.name, self.tick);
     }
 
-    pub fn can_join(&self) -> bool {
+    pub fn can_join(&self, player: String) -> u8 {
         let use_number = self.players.len() as u8;
-        use_number < self.max_number
+        if use_number < self.max_number {
+            return 1;
+        }
+
+        if self.players.contains(&player) {
+            return 2;
+        }
+
+        0
     }
 
     pub fn to_json(&self) -> serde_json::Value {
@@ -53,6 +61,10 @@ impl State {
             "players": self.players,
             "resources": self.state_resource
         })
+    }
+
+    pub fn remove_player(&mut self, player: String) {
+        self.players.retain(|x| x != &player);
     }
 }
 
