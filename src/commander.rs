@@ -15,9 +15,7 @@ use tungstenite::Message;
 pub async fn join_room(room: &str, name: &str, client: AxClient) {
     println!("Player {} join the room: {}", name, room);
     let c = client.lock().await;
-    println!("1");
     let mut room_map = STATE_MAP.lock().await;
-    println!("2");
 
     let st = {
         match room_map.get_mut(room) {
@@ -35,14 +33,12 @@ pub async fn join_room(room: &str, name: &str, client: AxClient) {
                     },
                 )
                 .await;
-                println!("3");
+
                 // 创建并运行 State 状态机
                 let s = state::State::new(room.to_string(), max_number);
-                println!("4");
                 let ax_s = Arc::new(Mutex::new(s));
 
                 tokio::task::spawn(state::run_state(ax_s.clone()));
-                println!("5");
                 room_map.insert(room.to_string(), ax_s.clone());
 
                 ax_s
@@ -51,14 +47,13 @@ pub async fn join_room(room: &str, name: &str, client: AxClient) {
     };
 
     let mut s = st.lock().await;
-    println!("6");
+
     let can_join: u8 = s.can_join(name);
-    println!("7, {}", can_join);
     if can_join != 0 {
         let _ = c.tx.unbounded_send(Message::Text(can_join.to_string()));
         return;
     }
-    println!("9");
+
     s.players
         .insert(name.to_string(), Player::new(name.to_string()));
 
