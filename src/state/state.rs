@@ -1,6 +1,6 @@
 use crate::{state::resource::StateResource, ws};
 use lazy_static::lazy_static;
-use std::{collections::HashMap, sync::Arc, ops::Index};
+use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::Mutex;
 

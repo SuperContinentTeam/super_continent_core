@@ -1,4 +1,4 @@
-use crate::{commander, state::state::STATE_MAP, db::USER_IN_ROOM};
+use crate::{commander, db::USER_IN_ROOM, state::state::STATE_MAP};
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use lazy_static::lazy_static;
@@ -115,7 +115,7 @@ async fn close_and_stop_state(addr: SocketAddr) {
         }
     }
     if user.is_empty() {
-        return
+        return;
     }
 
     peer_user_map.remove(&user);
