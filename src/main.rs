@@ -4,6 +4,7 @@ mod commander;
 mod db;
 mod state;
 mod ws;
+mod reference;
 
 fn main() {
     let rt = tokio::runtime::Runtime::new().unwrap();

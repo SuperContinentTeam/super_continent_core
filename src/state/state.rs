@@ -46,12 +46,23 @@ impl State {
     }
 
     pub fn add_player(&mut self, name: &str) {
-        let player = Player::new(name.to_string());
+        let mut player = Player::new(name.to_string());
+        let pos = self.world.rand_block();
+        let mut b = self.world.blocks.get_mut(&pos).unwrap();
+
+        b.belong = Some(name.to_string());
+        player.blocks.push(pos);
+
         self.players.insert(name.to_string(), player);
     }
 
     pub fn remove_player(&mut self, player: String) {
-        self.players.remove(&player);
+        if let Some(p) = self.players.remove(&player) {
+            for pos in p.blocks {
+                let mut b = self.world.blocks.get_mut(&pos).unwrap();
+                b.belong = None;
+            }
+        }
     }
 
     pub fn can_join(&self, player: &str) -> i32 {
