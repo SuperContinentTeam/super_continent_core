@@ -1,11 +1,4 @@
-use crate::{
-    commander,
-    db::USER_IN_ROOM,
-    state::{
-        player::Player,
-        state::{AXState, STATE_MAP},
-    },
-};
+use crate::{commander, db::USER_IN_ROOM, state::state::STATE_MAP};
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use lazy_static::lazy_static;
@@ -96,7 +89,6 @@ pub async fn get_clients(names: impl Iterator<Item = &String>) -> HashMap<String
 
     result
 }
-
 
 async fn close_and_stop_state(addr: SocketAddr) {
     let mut peer_user_map = PEER_USER_MAP.lock().await;
