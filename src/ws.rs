@@ -2,7 +2,6 @@ use crate::{commander, db::USER_IN_ROOM, state::state::STATE_MAP};
 use futures_channel::mpsc::{unbounded, UnboundedSender};
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use lazy_static::lazy_static;
-use serde_json::Value;
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_tungstenite::tungstenite::protocol::Message;
@@ -67,23 +66,19 @@ pub async fn process_message_from_client(msg: Message, client: AxClient) {
         Message::Ping(v) => {
             let _ = client.lock().await.tx.unbounded_send(Message::Pong(v));
         }
-        Message::Close(_v) => {
-            println!("Closed");
-        }
         _ => {}
     }
 }
 
-pub async fn send_message(msg: Value, tx: AxClient) {
-    let str_message = msg.to_string();
+pub async fn send_message(msg: String, tx: AxClient) {
     let _ = tx
         .lock()
         .await
         .tx
-        .unbounded_send(Message::Text(str_message));
+        .unbounded_send(Message::Text(msg));
 }
 
-pub async fn broadcast(players: &Vec<String>, msg: &Value) {
+pub async fn broadcast(players: &Vec<String>, msg: String) {
     let clients = {
         let mut result: Vec<AxClient> = Vec::new();
         let peer_map = PEER_MAP.lock().await;
@@ -126,10 +121,9 @@ async fn close_and_stop_state(addr: SocketAddr) {
 
         if st.is_some() {
             let mut s = st.unwrap().lock().await;
-
             s.remove_player(user);
+
             if s.players.len() == 0 {
-                println!("E");
                 s.status = 2;
                 ensure_remove = true;
             }

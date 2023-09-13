@@ -67,7 +67,7 @@ pub async fn join_room(room: &str, name: &str, client: AxClient) {
                 .await
                 .insert(name.to_string(), c.addr.clone());
             USER_IN_ROOM.lock().await.insert(name.to_string(), room.to_string());
-            
+
             room_map.insert(room.to_string(), ax_s.clone());
 
             tokio::task::spawn(state::run_state(ax_s.clone()));
@@ -93,7 +93,7 @@ pub async fn bypass_binary(options: &str, client: AxClient) {
         "02" => match cmd[1] {
             "rooms" => {
                 let result = db::query_all_rooms().await;
-                send_message(json!(result), client).await;
+                send_message(result.to_string(), client).await;
             }
             _ => {}
         },

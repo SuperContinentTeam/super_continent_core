@@ -53,14 +53,16 @@ impl State {
         0
     }
 
-    pub fn to_json(&self) -> serde_json::Value {
-        serde_json::json!({
-            "tick": self.tick,
-            "name": self.name,
-            "max_number": self.max_number,
-            "players": self.players,
-            "resources": self.state_resource
-        })
+    pub fn dumps(&self) -> String {
+        let results = vec![
+            self.name.clone(),
+            self.tick.to_string(),
+            self.max_number.to_string(),
+            self.players.join(":"),
+            self.state_resource.dumps(),
+        ];
+
+        results.join(";")
     }
 
     pub fn remove_player(&mut self, player: String) {
@@ -77,7 +79,8 @@ pub async fn run_state(state: AXState) {
         let mut s = state_clone.lock().await;
         if s.status == 1 {
             s.next().await;
-            ws::broadcast(&s.players, &s.to_json()).await;
+            ws::broadcast(&s.players, s.dumps()).await;
+            // ws::broadcast(&s.players, &s.to_json()).await;
         } else if s.status == 2 {
             break;
         }
