@@ -25,7 +25,7 @@ fn main() {
 }
 
 async fn start_websocket_server() {
-    let addr = "0.0.0.0:7000".to_string();
+    let addr = "0.0.0.0:10000".to_string();
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
 
@@ -37,7 +37,7 @@ async fn start_websocket_server() {
 }
 
 async fn start_http_server() {
-    let addr = "0.0.0.0:7001";
+    let addr = "0.0.0.0:10001";
     let sock = SocketAddr::from_str(addr).expect("Failed to bind");
 
     println!("Http Server Listening on: {}", addr);
