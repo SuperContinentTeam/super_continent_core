@@ -16,3 +16,5 @@ tokio-tungstenite = "0.20.0"
 futures-util = "0.3.28"
 futures-channel = "0.3.28"
 rand = "0.8.5"
+axum = "0.6.20"
+tower-http = { version = "0.4.0", features = ["cors"] }

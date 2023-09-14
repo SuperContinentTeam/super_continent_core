@@ -15,6 +15,7 @@ pub struct Client {
 pub type AxClient = Arc<Mutex<Client>>;
 pub type PeerMap = Arc<Mutex<HashMap<SocketAddr, AxClient>>>;
 pub type PeerUserMap = Arc<Mutex<HashMap<String, SocketAddr>>>;
+
 lazy_static! {
     // WebSocket 发送数据的通道表
     pub static ref PEER_MAP: PeerMap = PeerMap::default();
