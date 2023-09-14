@@ -3,8 +3,7 @@ use std::sync::Arc;
 use crate::{
     db::{self, USER_IN_ROOM},
     reference::{AxClient, PEER_USER_MAP},
-    state::state::{run_state, State, STATE_MAP},
-    ws::send_message,
+    state::state::{run_state, State, STATE_MAP}
 };
 use serde_json::json;
 use tokio::sync::Mutex;
