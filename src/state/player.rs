@@ -1,4 +1,4 @@
-use super::{resource::StateResource, world::Block};
+use super::resource::StateResource;
 
 pub struct Player{
     pub name: String,

@@ -1,26 +1,14 @@
-use crate::{commander, db::USER_IN_ROOM, state::state::STATE_MAP};
-use futures_channel::mpsc::{unbounded, UnboundedSender};
+use crate::{
+    commander,
+    db::USER_IN_ROOM,
+    reference::{AxClient, Client, PEER_MAP, PEER_USER_MAP},
+    state::state::STATE_MAP,
+};
+use futures_channel::mpsc::unbounded;
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
-use lazy_static::lazy_static;
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_tungstenite::tungstenite::protocol::Message;
-
-pub type Tx = UnboundedSender<Message>;
-
-pub struct Client {
-    pub tx: Tx,
-    pub addr: SocketAddr,
-}
-
-pub type AxClient = Arc<Mutex<Client>>;
-pub type PeerMap = Arc<Mutex<HashMap<SocketAddr, AxClient>>>;
-pub type PeerUserMap = Arc<Mutex<HashMap<String, SocketAddr>>>;
-
-lazy_static! {
-    pub static ref PEER_MAP: PeerMap = PeerMap::default();
-    pub static ref PEER_USER_MAP: PeerUserMap = PeerUserMap::default();
-}
 
 pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr) {
     println!("Incoming TCP connection from: {}", addr);

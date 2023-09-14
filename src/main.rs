@@ -8,10 +8,10 @@ mod reference;
 
 fn main() {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on(start_server());
+    rt.block_on(start_websocket_server());
 }
 
-async fn start_server() {
+async fn start_websocket_server() {
     let addr = "0.0.0.0:7000".to_string();
 
     let try_socket = TcpListener::bind(&addr).await;
