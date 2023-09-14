@@ -48,7 +48,7 @@ impl State {
     pub fn add_player(&mut self, name: &str) {
         let mut player = Player::new(name.to_string());
         let pos = self.world.rand_block();
-        let mut b = self.world.blocks.get_mut(&pos).unwrap();
+        let b = self.world.blocks.get_mut(&pos).unwrap();
 
         b.belong = Some(name.to_string());
         player.blocks.push(pos);
@@ -59,7 +59,7 @@ impl State {
     pub fn remove_player(&mut self, player: String) {
         if let Some(p) = self.players.remove(&player) {
             for pos in p.blocks {
-                let mut b = self.world.blocks.get_mut(&pos).unwrap();
+                let b = self.world.blocks.get_mut(&pos).unwrap();
                 b.belong = None;
             }
         }
