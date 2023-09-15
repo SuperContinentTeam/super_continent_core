@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
@@ -26,13 +26,6 @@ pub async fn save_room_info(name: &str, info: RoomInfo) {
     if !db.contains_key(name) {
         db.insert(name.to_string(), info);
     }
-}
-
-pub async fn query_all_rooms() -> Value {
-    let db_clone = DB.clone();
-    let db = db_clone.lock().await;
-
-    json!(*db)
 }
 
 pub async fn update_room_info(name: &str, value: &Value) {
