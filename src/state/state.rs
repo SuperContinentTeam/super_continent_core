@@ -1,27 +1,19 @@
-use lazy_static::lazy_static;
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
-use tokio::sync::Mutex;
+use crate::reference::{AXState, TIME_FLOW};
 
 use crate::ws::{send_message, get_clients};
 
 use super::{player::Player, world::World};
 
-pub type AXState = Arc<Mutex<State>>;
-// RoomName -> State
-type StateMap = Arc<Mutex<HashMap<String, AXState>>>;
-
-lazy_static! {
-    pub static ref STATE_MAP: StateMap = StateMap::default();
-    pub static ref TIME_FLOW: tokio::time::Duration = tokio::time::Duration::from_secs(1);
-}
 
 pub struct State {
     pub tick: u64,
     pub name: String,
     pub max_number: i32,
     pub players: HashMap<String, Player>,
-    pub status: i32, // 0: pause, 1: running, 2: exit
+    pub status: i32,
+    // 0: pause, 1: running, 2: exit
     pub world: World,
 }
 
@@ -39,7 +31,7 @@ impl State {
 
     pub async fn next(&mut self) {
         self.tick += 1;
-        for (_ , player) in self.players.iter_mut() {
+        for (_, player) in self.players.iter_mut() {
             player.next();
         }
         println!("State: {}, Tick: {}", self.name, self.tick);
@@ -82,16 +74,15 @@ impl State {
         let player = self.players.get(name).unwrap();
         let results = vec![
             self.tick.to_string(),
-            player.dumps()
+            player.dumps(),
         ];
 
         results.join(";")
     }
 
 
-
     pub async fn broadcast(&self) {
-        let clients= get_clients(self.players.keys()).await;
+        let clients = get_clients(self.players.keys()).await;
         for (name, _) in self.players.iter() {
             let message = self.dump_by_one(name);
             if let Some(c) = clients.get(name) {

@@ -1,8 +1,7 @@
 use crate::{
     commander,
     db::USER_IN_ROOM,
-    reference::{AxClient, Client, PEER_MAP, PEER_USER_MAP},
-    state::state::STATE_MAP,
+    reference::{AxClient, Client, PEER_MAP, PEER_USER_MAP, STATE_MAP},
 };
 use futures_channel::mpsc::unbounded;
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};

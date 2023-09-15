@@ -3,12 +3,13 @@ use std::sync::Arc;
 use crate::{
     db::{self, USER_IN_ROOM},
     reference::{AxClient, PEER_USER_MAP},
-    state::state::{run_state, State, STATE_MAP},
+    state::state::{run_state, State},
     ws::send_message,
 };
 use serde_json::json;
 use tokio::sync::Mutex;
 use tungstenite::Message;
+use crate::reference::STATE_MAP;
 
 pub async fn join_room(room: &str, name: &str, client: AxClient) {
     println!("Player {} join the room: {}", name, room);
