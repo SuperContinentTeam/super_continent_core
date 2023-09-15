@@ -4,11 +4,12 @@ use serde_json::Value;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct RoomInfo {
     pub use_number: i32,
     pub max_number: i32,
     pub status: i32,
+    pub width: i32,
     pub players: Vec<String>,
 }
 
@@ -20,11 +21,11 @@ lazy_static! {
     pub static ref USER_IN_ROOM: UserInRoomMap = UserInRoomMap::default();
 }
 
-pub async fn save_room_info(name: &str, info: RoomInfo) {
+pub async fn save_room_info(name: &str, info: &RoomInfo) {
     let db_clone = DB.clone();
     let mut db = db_clone.lock().await;
     if !db.contains_key(name) {
-        db.insert(name.to_string(), info);
+        db.insert(name.to_string(), info.clone());
     }
 }
 

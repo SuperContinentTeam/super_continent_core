@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use crate::db::RoomInfo;
 
 use crate::reference::{AXState, TIME_FLOW};
 
@@ -18,14 +19,14 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(name: String, max_number: i32, world_width: i32) -> Self {
-        State {
+    pub fn from_info(name: String, info: &RoomInfo) -> Self {
+        Self {
             tick: 0,
             name,
-            max_number,
+            max_number: info.max_number,
             players: HashMap::new(),
             status: 0,
-            world: World::new(world_width),
+            world: World::new(info.width),
         }
     }
 
@@ -60,14 +61,14 @@ impl State {
     pub fn can_join(&self, player: &str) -> i32 {
         let use_number = self.players.len() as i32;
         if use_number >= self.max_number {
-            return 1;
+            return 0;
         }
 
         if self.players.contains_key(player) {
             return 2;
         }
 
-        0
+        1
     }
 
     pub fn dump_by_one(&self, name: &String) -> String {

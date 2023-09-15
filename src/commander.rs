@@ -1,58 +1,19 @@
-use std::sync::Arc;
-
 use crate::{
     db::{self, USER_IN_ROOM},
     reference::{AxClient, PEER_USER_MAP},
-    state::state::{run_state, State}
 };
 use serde_json::json;
-use tokio::sync::Mutex;
-use tungstenite::Message;
 use crate::reference::STATE_MAP;
 
 pub async fn join_room(room: &str, name: &str, client: AxClient) {
     println!("Player {} join the room: {}", name, room);
     let c = client.lock().await;
-    let mut room_map = STATE_MAP.lock().await;
-
-    let st = {
-        match room_map.get_mut(room) {
-            Some(s) => s.clone(),
-            None => {
-                let max_number = 10;
-                // 缓存
-                db::save_room_info(
-                    room,
-                    db::RoomInfo {
-                        use_number: 0, // 设为0 为了降低代码重复性 在后面采用更新的方式写入1
-                        max_number,
-                        status: 0,
-                        players: vec![name.to_string()],
-                    },
-                )
-                .await;
-
-                // 创建并运行 State 状态机
-                let s = State::new(room.to_string(), max_number, 10);
-                let ax_s = Arc::new(Mutex::new(s));
-
-                tokio::task::spawn(run_state(ax_s.clone()));
-                room_map.insert(room.to_string(), ax_s.clone());
-
-                ax_s
-            }
-        }
-    };
-
+    let mut st_map = STATE_MAP.lock().await;
+    let st = st_map.get_mut(room).unwrap();
     let mut s = st.lock().await;
 
-    let can_join: i32 = s.can_join(name);
-    if can_join != 0 {
-        let _ = c.tx.unbounded_send(Message::Text(can_join.to_string()));
-        return;
-    }
-
     s.add_player(name);
+
     db::update_room_info(
         name,
         &json!({"use_number": s.players.len(), "add_player": name}),
@@ -64,7 +25,6 @@ pub async fn join_room(room: &str, name: &str, client: AxClient) {
         .lock()
         .await
         .insert(name.to_string(), c.addr.clone());
-
     // 保存用户与房间的对应关系 方便查询
     USER_IN_ROOM
         .lock()
