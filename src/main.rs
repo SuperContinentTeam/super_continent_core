@@ -8,6 +8,7 @@ mod state;
 mod ws;
 mod reference;
 mod http_server;
+mod meta;
 
 fn main() {
     let t1 = std::thread::spawn(|| {
