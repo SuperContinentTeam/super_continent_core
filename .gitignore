@@ -2,3 +2,6 @@
 .env
 .idea/
 .vscode/
+*.py
+readme.md
+LICENSE
