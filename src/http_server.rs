@@ -18,7 +18,8 @@ pub fn build_router() -> Router {
         .route("/health", get(health))
         .route("/query-rooms", get(query_rooms))
         .route("/create-room", post(create_room))
-        .route("/check-join", post(check_join));
+        .route("/check-join", post(check_join))
+        .route("/update-status", post(update_status));
 
     r
 }
@@ -30,9 +31,9 @@ fn response_result<T>(code: i32, result: T) -> Json<Value>
     Json(v)
 }
 
-// fn response_success() -> Json<Value> {
-//     response_result(1, "success".to_string())
-// }
+fn response_success() -> Json<Value> {
+    response_result(1, "success".to_string())
+}
 
 fn response_failed() -> Json<Value> {
     response_result(0, "failed".to_string())
@@ -55,13 +56,17 @@ async fn create_room(Json(body): Json<Value>) -> impl IntoResponse {
         return response_result(0, format!("Room: {} has been existed", r_name));
     }
 
+    let gm = body.get("gm").unwrap().as_str().unwrap();
+
     let room_info = RoomInfo {
         use_number: 0,
         max_number: body.get("maxNumber").unwrap().as_i64().unwrap() as i32,
         status: 0,
         width: body.get("worldWidth").unwrap().as_i64().unwrap() as i32,
         players: Vec::new(),
+        gm: gm.to_string(),
     };
+
     db::save_room_info(r_name, &room_info).await;
 
     let s = State::from_info(r_name.to_string(), &room_info);
@@ -87,10 +92,21 @@ async fn check_join(Json(body): Json<Value>) -> impl IntoResponse {
     }
 }
 
-async fn update_room(Json(body): Json<Value>) -> impl IntoResponse {
+async fn update_status(Json(body): Json<Value>) -> impl IntoResponse {
     let room_map = STATE_MAP.lock().await;
     let room_name = body.get("room").unwrap().as_str().unwrap();
 
-    if let Some(room) = room_map.get_mut(room_name) {
+    if let Some(r) = room_map.get(room_name) {
+        let mut room = r.lock().await;
+
+        let gm = body.get("gm").unwrap().as_str().unwrap();
+        if room.gm != gm {
+            return response_result(0, "You have no permission");
+        }
+
+        let status = body.get("status").unwrap().as_i64().unwrap();
+        room.status = status as i32;
     }
+
+    response_success()
 }

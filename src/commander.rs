@@ -47,7 +47,6 @@ pub async fn bypass_binary(options: &str, client: AxClient) {
     println!("{:?}", cmd);
     match cmd[0] {
         "01" => join_room(cmd[1], cmd[2], client).await,
-        "02" => update_status(cmd[1], cmd[2]).await,
         _ => {}
     }
 }

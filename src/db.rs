@@ -11,6 +11,7 @@ pub struct RoomInfo {
     pub status: i32,
     pub width: i32,
     pub players: Vec<String>,
+    pub gm: String,
 }
 
 type RoomInfoMap = Arc<Mutex<HashMap<String, RoomInfo>>>;
