@@ -11,7 +11,7 @@ use crate::db;
 
 use crate::db::{DB, RoomInfo};
 use crate::reference::STATE_MAP;
-use crate::state::state::{run_state, State};
+use crate::state::{run_state, State};
 
 pub fn build_router() -> Router {
     let r = Router::new()
@@ -100,9 +100,6 @@ async fn update_status(Json(body): Json<Value>) -> impl IntoResponse {
         let mut room = r.lock().await;
 
         let gm = body.get("gm").unwrap().as_str().unwrap();
-        if room.gm != gm {
-            return response_result(0, "You have no permission");
-        }
 
         let status = body.get("status").unwrap().as_i64().unwrap();
         room.status = status as i32;

@@ -4,7 +4,7 @@ use rand::{distributions::WeightedIndex, prelude::Distribution};
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::protocol::Message;
-use crate::state::state::State;
+use crate::state::State;
 
 pub type Tx = UnboundedSender<Message>;
 

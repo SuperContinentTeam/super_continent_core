@@ -1,11 +1,12 @@
 use std::collections::HashMap;
+use futures_util::StreamExt;
 use crate::db::RoomInfo;
 
 use crate::reference::{AXState, TIME_FLOW};
 
 use crate::ws::{send_message, get_clients};
 
-use super::{player::Player, world::World};
+use crate::{player::Player, game::world::World};
 
 
 pub struct State {
@@ -13,8 +14,6 @@ pub struct State {
     pub name: String,
     pub max_number: i32,
     pub players: HashMap<String, Player>,
-    // game manager in this room
-    pub gm: String,
     // 0: pause, 1: running, 2: exit
     pub status: i32,
     pub world: World,
@@ -29,7 +28,6 @@ impl State {
             players: HashMap::new(),
             status: 0,
             world: World::new(info.width),
-            gm: info.gm.clone(),
         }
     }
 
