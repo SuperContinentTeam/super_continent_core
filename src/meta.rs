@@ -1,12 +1,7 @@
+use serde::{Deserialize, Serialize};
 use std::env;
-use std::env::home_dir;
-use std::fmt::format;
 use std::fs::File;
 use std::io::Read;
-use lazy_static::lazy_static;
-use serde::{Deserialize, Serialize};
-use toml::Value;
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Configure {
@@ -23,7 +18,7 @@ fn open_file(file_path: &str) -> String {
     let mut content = String::new();
     match file_object.read_to_string(&mut content) {
         Ok(r) => r,
-        Err(e) => panic!("Error reading file: {}", e)
+        Err(e) => panic!("Error reading file: {}", e),
     };
 
     content
@@ -31,7 +26,11 @@ fn open_file(file_path: &str) -> String {
 
 pub fn parse_toml_config() -> Configure {
     let args = env::args().collect::<Vec<String>>();
-    let config_file = if args.len() == 1 { "default.toml" } else { &args[1] };
+    let config_file = if args.len() == 1 {
+        "default.toml"
+    } else {
+        &args[1]
+    };
 
     let content = open_file(config_file);
     let v: Configure = toml::from_str(&content).unwrap();

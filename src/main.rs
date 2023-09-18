@@ -1,18 +1,17 @@
-use std::{net::SocketAddr, str::FromStr};
-use tower_http::cors::CorsLayer;
-use tokio::net::TcpListener;
 use crate::meta::parse_toml_config;
-// use crate::meta::{get_http_addr, get_ws_addr};
+use std::{net::SocketAddr, str::FromStr};
+use tokio::net::TcpListener;
+use tower_http::cors::CorsLayer;
 
 mod commander;
 mod db;
 mod game;
-mod ws;
-mod reference;
 mod http_server;
-mod state;
-mod player;
 mod meta;
+mod player;
+mod reference;
+mod state;
+mod ws;
 
 fn main() {
     let conf = parse_toml_config();
@@ -39,7 +38,6 @@ async fn start_websocket_server(addr: String) {
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
 
-
     while let Ok((stream, addr)) = listener.accept().await {
         tokio::spawn(ws::handle_connection(stream, addr));
     }
@@ -48,7 +46,8 @@ async fn start_websocket_server(addr: String) {
 async fn start_http_server(addr: String) {
     println!("Http Server Listening on: {}", addr);
     let sock = SocketAddr::from_str(&addr).expect("Failed to bind");
-    let app = http_server::build_router()
-        .layer(CorsLayer::new());
-    let _ = axum::Server::bind(&sock).serve(app.into_make_service()).await;
+    let app = http_server::build_router().layer(CorsLayer::new());
+    let _ = axum::Server::bind(&sock)
+        .serve(app.into_make_service())
+        .await;
 }
