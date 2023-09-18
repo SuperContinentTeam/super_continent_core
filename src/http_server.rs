@@ -30,9 +30,9 @@ fn response_result<T>(code: i32, result: T) -> Json<Value>
     Json(v)
 }
 
-fn response_success() -> Json<Value> {
-    response_result(1, "success".to_string())
-}
+// fn response_success() -> Json<Value> {
+//     response_result(1, "success".to_string())
+// }
 
 fn response_failed() -> Json<Value> {
     response_result(0, "failed".to_string())
@@ -84,5 +84,13 @@ async fn check_join(Json(body): Json<Value>) -> impl IntoResponse {
             let result = room.lock().await.can_join(name);
             response_result(result, result)
         }
+    }
+}
+
+async fn update_room(Json(body): Json<Value>) -> impl IntoResponse {
+    let room_map = STATE_MAP.lock().await;
+    let room_name = body.get("room").unwrap().as_str().unwrap();
+
+    if let Some(room) = room_map.get_mut(room_name) {
     }
 }
