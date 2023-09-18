@@ -1,7 +1,6 @@
 use crate::{
     commander,
-    db::USER_IN_ROOM,
-    reference::{AxClient, Client, PEER_MAP, PEER_USER_MAP, STATE_MAP},
+    reference::{AxClient, Client, PEER_MAP, PEER_USER_MAP},
 };
 use futures_channel::mpsc::unbounded;
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
@@ -42,7 +41,6 @@ pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr) {
     println!("{} disconnected", &addr);
 
     PEER_MAP.lock().await.remove(&addr);
-    tokio::task::spawn(close_and_stop_state(addr.clone()));
 }
 
 pub async fn process_message_from_client(msg: Message, client: AxClient) {
@@ -75,41 +73,4 @@ pub async fn get_clients(names: impl Iterator<Item = &String>) -> HashMap<String
     }
 
     result
-}
-
-async fn close_and_stop_state(addr: SocketAddr) {
-    let mut peer_user_map = PEER_USER_MAP.lock().await;
-    let mut state_map = STATE_MAP.lock().await;
-    let mut u_in_room = USER_IN_ROOM.lock().await;
-
-    let mut user = String::new();
-    for (u, a) in peer_user_map.iter() {
-        if a == &addr {
-            user = u.clone();
-        }
-    }
-    if user.is_empty() {
-        return;
-    }
-
-    peer_user_map.remove(&user);
-
-    if let Some(room) = u_in_room.remove(&user) {
-        let st = state_map.get(&room);
-        let mut ensure_remove = false;
-
-        if st.is_some() {
-            let mut s = st.unwrap().lock().await;
-            s.remove_player(user);
-
-            if s.players.len() == 0 {
-                s.status = 2;
-                ensure_remove = true;
-            }
-        }
-
-        if ensure_remove {
-            state_map.remove(&room);
-        }
-    }
 }

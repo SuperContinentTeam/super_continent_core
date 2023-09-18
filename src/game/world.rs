@@ -18,7 +18,7 @@ impl Block {
             row,
             col,
             belong: None,
-            environment: random_block_env()
+            environment: random_block_env(),
         }
     }
 

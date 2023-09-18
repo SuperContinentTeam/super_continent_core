@@ -1,33 +1,28 @@
 use std::collections::HashMap;
-use futures_util::StreamExt;
-use crate::db::RoomInfo;
 
 use crate::reference::{AXState, TIME_FLOW};
 
-use crate::ws::{send_message, get_clients};
+use crate::ws::{get_clients, send_message};
 
-use crate::{player::Player, game::world::World};
-
+use crate::{game::world::World, player::Player};
 
 pub struct State {
     pub tick: u64,
-    pub name: String,
-    pub max_number: i32,
     pub players: HashMap<String, Player>,
+    pub max_number: i32,
     // 0: pause, 1: running, 2: exit
     pub status: i32,
     pub world: World,
 }
 
 impl State {
-    pub fn from_info(name: String, info: &RoomInfo) -> Self {
+    pub fn new() -> Self {
         Self {
             tick: 0,
-            name,
-            max_number: info.max_number,
             players: HashMap::new(),
+            max_number: 10,
             status: 0,
-            world: World::new(info.width),
+            world: World::new(10),
         }
     }
 
@@ -36,7 +31,7 @@ impl State {
         for (_, player) in self.players.iter_mut() {
             player.next();
         }
-        println!("State: {}, Tick: {}", self.name, self.tick);
+        println!("State Tick: {}", self.tick);
     }
 
     pub fn add_player(&mut self, name: &str) {
@@ -74,14 +69,10 @@ impl State {
 
     pub fn dump_by_one(&self, name: &String) -> String {
         let player = self.players.get(name).unwrap();
-        let results = vec![
-            self.tick.to_string(),
-            player.dumps(),
-        ];
+        let results = vec![self.tick.to_string(), player.dumps()];
 
         results.join(";")
     }
-
 
     pub async fn broadcast(&self) {
         let clients = get_clients(self.players.keys()).await;

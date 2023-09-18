@@ -47,7 +47,7 @@ impl StateResource {
             self.food.dumps(),
             self.customer.dumps(),
             self.alloy.dumps(),
-            self.technology.dumps()
+            self.technology.dumps(),
         ];
 
         results.join(":")

@@ -1,9 +1,5 @@
-use crate::{
-    db::{self, USER_IN_ROOM},
-    reference::{AxClient, PEER_USER_MAP},
-};
-use serde_json::json;
 use crate::reference::STATE_MAP;
+use crate::reference::{AxClient, PEER_USER_MAP};
 
 pub async fn join_room(room: &str, name: &str, client: AxClient) {
     println!("Player {} join the room: {}", name, room);
@@ -14,22 +10,11 @@ pub async fn join_room(room: &str, name: &str, client: AxClient) {
 
     s.add_player(name);
 
-    db::update_room_info(
-        name,
-        &json!({"use_number": s.players.len(), "add_player": name}),
-    )
-    .await;
-
     // 保存用户与连接ip的对应关系
     PEER_USER_MAP
         .lock()
         .await
         .insert(name.to_string(), c.addr.clone());
-    // 保存用户与房间的对应关系 方便查询
-    USER_IN_ROOM
-        .lock()
-        .await
-        .insert(name.to_string(), room.to_string());
 }
 
 pub async fn update_status(room: &str, status: &str) {
