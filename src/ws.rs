@@ -1,6 +1,6 @@
 use crate::{
     commander,
-    reference::{AxClient, Client, PEER_MAP, PEER_USER_MAP, AXState},
+    reference::{AXState, AxClient, Client, PEER_MAP},
 };
 use futures_channel::mpsc::unbounded;
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
@@ -30,7 +30,11 @@ pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr, s: AXSta
     let (outgoing, incoming) = ws_stream.split();
     let s1 = s.clone();
     let receive_from = incoming.try_for_each(move |msg| {
-        tokio::task::spawn(process_message_from_client(msg, ax_client.clone(), s1.clone()));
+        tokio::task::spawn(process_message_from_client(
+            msg,
+            ax_client.clone(),
+            s1.clone(),
+        ));
         future::ok(())
     });
 
@@ -47,7 +51,12 @@ pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr, s: AXSta
 pub async fn process_message_from_client(msg: Message, client: AxClient, s: AXState) {
     match msg {
         Message::Binary(msg) => {
-            commander::bypass_binary(std::str::from_utf8(&msg).unwrap(), client.clone()).await
+            commander::bypass_binary(
+                std::str::from_utf8(&msg).unwrap(),
+                client.clone(),
+                s.clone(),
+            )
+            .await
         }
         Message::Ping(v) => {
             let _ = client.lock().await.tx.unbounded_send(Message::Pong(v));
@@ -60,18 +69,18 @@ pub async fn send_message(msg: String, tx: AxClient) {
     let _ = tx.lock().await.tx.unbounded_send(Message::Text(msg));
 }
 
-pub async fn get_clients(names: impl Iterator<Item = &String>) -> HashMap<String, AxClient> {
-    let peer_map = PEER_MAP.lock().await;
-    let peer_user_map = PEER_USER_MAP.lock().await;
-    let mut result: HashMap<String, AxClient> = HashMap::new();
+// pub async fn get_clients(names: impl Iterator<Item = &String>) -> HashMap<String, AxClient> {
+//     let peer_map = PEER_MAP.lock().await;
 
-    for name in names {
-        if let Some(socket_addr) = peer_user_map.get(name) {
-            if let Some(client) = peer_map.get(socket_addr) {
-                result.insert(name.clone(), client.clone());
-            }
-        }
-    }
+//     let mut result: HashMap<String, AxClient> = HashMap::new();
 
-    result
-}
+//     for name in names {
+//         if let Some(socket_addr) = peer_user_map.get(name) {
+//             if let Some(client) = peer_map.get(socket_addr) {
+//                 result.insert(name.clone(), client.clone());
+//             }
+//         }
+//     }
+
+//     result
+// }

@@ -1,8 +1,7 @@
 use std::collections::HashMap;
+use crate::reference::{AXState, AxClient, TIME_FLOW};
 
-use crate::reference::{AXState, TIME_FLOW};
-
-use crate::ws::{get_clients, send_message};
+use crate::ws::send_message;
 
 use crate::{game::world::World, player::Player};
 
@@ -24,8 +23,9 @@ impl State {
         println!("State Tick: {}", self.tick);
     }
 
-    pub fn add_player(&mut self, name: &str) {
-        let mut player = Player::new(name.to_string());
+    pub fn add_player(&mut self, name: &str, client: AxClient) {
+        let mut player = Player::new(client, name.to_string());
+
         let pos = self.world.rand_block();
         let b = self.world.blocks.get_mut(&pos).unwrap();
 
@@ -35,14 +35,14 @@ impl State {
         self.players.insert(name.to_string(), player);
     }
 
-    pub fn remove_player(&mut self, player: String) {
-        if let Some(p) = self.players.remove(&player) {
-            for pos in p.blocks {
-                let b = self.world.blocks.get_mut(&pos).unwrap();
-                b.belong = None;
-            }
-        }
-    }
+    // pub fn remove_player(&mut self, player: String) {
+    //     if let Some(p) = self.players.remove(&player) {
+    //         for pos in p.blocks {
+    //             let b = self.world.blocks.get_mut(&pos).unwrap();
+    //             b.belong = None;
+    //         }
+    //     }
+    // }
 
     pub fn can_join(&self, player: &str) -> i32 {
         let use_number = self.players.len() as i32;
@@ -65,12 +65,9 @@ impl State {
     }
 
     pub async fn broadcast(&self) {
-        let clients = get_clients(self.players.keys()).await;
-        for (name, _) in self.players.iter() {
-            let message = self.dump_by_one(name);
-            if let Some(c) = clients.get(name) {
-                tokio::task::spawn(send_message(message, c.clone()));
-            }
+        for player in self.players.values() {
+            let message = self.dump_by_one(&player.name);
+            tokio::task::spawn(send_message(message, player.client.clone()));
         }
     }
 }
