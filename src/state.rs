@@ -9,23 +9,13 @@ use crate::{game::world::World, player::Player};
 pub struct State {
     pub tick: u64,
     pub players: HashMap<String, Player>,
-    pub max_number: i32,
+    pub max_player: i32,
     // 0: pause, 1: running, 2: exit
     pub status: i32,
     pub world: World,
 }
 
 impl State {
-    pub fn new() -> Self {
-        Self {
-            tick: 0,
-            players: HashMap::new(),
-            max_number: 10,
-            status: 0,
-            world: World::new(10),
-        }
-    }
-
     pub async fn next(&mut self) {
         self.tick += 1;
         for (_, player) in self.players.iter_mut() {
@@ -56,7 +46,7 @@ impl State {
 
     pub fn can_join(&self, player: &str) -> i32 {
         let use_number = self.players.len() as i32;
-        if use_number >= self.max_number {
+        if use_number >= self.max_player {
             return 0;
         }
 

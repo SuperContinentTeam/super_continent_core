@@ -29,6 +29,7 @@ lazy_static! {
     pub static ref STATE_MAP: StateMap = StateMap::default();
     pub static ref TIME_FLOW: tokio::time::Duration = tokio::time::Duration::from_secs(1);
 
+    // pub static ref GLOBAL_STATE: AXState:
     // 地块环境表 [死寂、恶劣、一般、良好、理想]
     pub static ref ENVIRONMENT_TYPES: [i32; 5] = [-2, -1, 0, 1, 2];
     // 生成各地块环境的随机权重

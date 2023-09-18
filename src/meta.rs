@@ -5,8 +5,9 @@ use std::io::Read;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Configure {
-    pub http_server: String,
     pub ws_server: String,
+    pub max_player: i32,
+    pub world_size: i32,
 }
 
 fn open_file(file_path: &str) -> String {

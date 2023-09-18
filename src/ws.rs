@@ -1,6 +1,6 @@
 use crate::{
     commander,
-    reference::{AxClient, Client, PEER_MAP, PEER_USER_MAP},
+    reference::{AxClient, Client, PEER_MAP, PEER_USER_MAP, AXState},
 };
 use futures_channel::mpsc::unbounded;
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
@@ -8,7 +8,7 @@ use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
-pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr) {
+pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr, s: AXState) {
     println!("Incoming TCP connection from: {}", addr);
 
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
@@ -28,8 +28,9 @@ pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr) {
 
     // outgoing 用于发送数据到 WebSocket 连接，incoming 用于接收从 WebSocket 连接接收到的数据
     let (outgoing, incoming) = ws_stream.split();
+    let s1 = s.clone();
     let receive_from = incoming.try_for_each(move |msg| {
-        tokio::task::spawn(process_message_from_client(msg, ax_client.clone()));
+        tokio::task::spawn(process_message_from_client(msg, ax_client.clone(), s1.clone()));
         future::ok(())
     });
 
@@ -43,7 +44,7 @@ pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr) {
     PEER_MAP.lock().await.remove(&addr);
 }
 
-pub async fn process_message_from_client(msg: Message, client: AxClient) {
+pub async fn process_message_from_client(msg: Message, client: AxClient, s: AXState) {
     match msg {
         Message::Binary(msg) => {
             commander::bypass_binary(std::str::from_utf8(&msg).unwrap(), client.clone()).await

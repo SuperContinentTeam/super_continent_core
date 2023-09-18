@@ -1,2 +1,3 @@
 ws_server="0.0.0.0:10000"
-http_server="0.0.0.0:10001"
+max_player=7
+world_size=10
