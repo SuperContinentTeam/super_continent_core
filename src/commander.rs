@@ -40,9 +40,9 @@ pub async fn bypass_binary(options: &str, client: AxClient, s: AXState) {
     let s = s.clone();
 
     match cmd[0] {
-        "00" => join_room(cmd[1], client, s).await,
-        "01" => ready(cmd[1], client, s).await,
-        "02" => player_leave(client, s).await,
+        "0" => join_room(cmd[1], client, s).await,
+        "1" => ready(cmd[1], client, s).await,
+        "2" => player_leave(client, s).await,
         _ => {}
     }
 }
