@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::reference::{AXState, AxClient, TIME_FLOW};
+use std::collections::HashMap;
 
 use crate::ws::send_message;
 
@@ -68,6 +68,32 @@ impl State {
         for player in self.players.values() {
             let message = self.dump_by_one(&player.name);
             tokio::task::spawn(send_message(message, player.client.clone()));
+        }
+    }
+
+    pub async fn broadcast_message(&self, message: &str) {
+        for player in self.players.values() {
+            tokio::task::spawn(send_message(message.to_string(), player.client.clone()));
+        }
+    }
+
+    pub async fn player_ready(&mut self, name: &str, status: i32) {
+        if let Some(p) = self.players.get_mut(name) {
+            p.ready = status;
+        }
+
+        let mut can_start = true;
+        for p in self.players.values() {
+            if p.ready == 0 {
+                can_start = false;
+                break;
+            }
+        }
+
+        if can_start {
+            self.status = 1;
+            // 广播消息, 通知客户的可以开始
+            self.broadcast_message("01").await;
         }
     }
 }

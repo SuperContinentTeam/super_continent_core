@@ -4,7 +4,7 @@ use crate::{
 };
 use futures_channel::mpsc::unbounded;
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc};
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
@@ -21,6 +21,7 @@ pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr, s: AXSta
     let client = Client {
         addr: addr.clone(),
         tx,
+        player:None
     };
     let ax_client = Arc::new(Mutex::new(client));
 

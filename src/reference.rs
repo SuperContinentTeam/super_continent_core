@@ -11,6 +11,7 @@ pub type Tx = UnboundedSender<Message>;
 pub struct Client {
     pub tx: Tx,
     pub addr: SocketAddr,
+    pub player: Option<String>,
 }
 
 pub type AxClient = Arc<Mutex<Client>>;
