@@ -102,10 +102,31 @@ impl World {
         let mut v = Vec::new();
         for vr in &self.blocks {
             for b in vr {
-                v.push(format!("{},{},{}", b.row, b.col, if b.can_visit(player) {1} else {0}));
+                v.push(format!(
+                    "{},{},{}",
+                    b.row,
+                    b.col,
+                    if b.can_visit(player) { 1 } else { 0 }
+                ));
             }
         }
 
         v.join(";")
     }
+
+    pub fn query_player_blocks(&self, name: &str) -> Vec<&Block> {
+        let mut v = Vec::new();
+        for vr in &self.blocks {
+            for block in vr {
+                if let Some(belong) = &block.belong {
+                    if belong == name {
+                        v.push(block);
+                    }
+                }
+            }
+        }
+
+        v
+    }
+
 }

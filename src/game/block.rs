@@ -1,4 +1,4 @@
-use crate::{player::Player, reference::random_block_env};
+use crate::{player::Player, reference::{random_block_env, random_product}};
 
 pub struct Block {
     pub row: i32,
@@ -7,17 +7,21 @@ pub struct Block {
     pub environment: i32,
     pub z_width: i32,
     pub zoning_set: Vec<i32>,
+
+    pub product: (i32, i32, i32)
 }
 
 impl Block {
     pub fn new(row: i32, col: i32, z_width: i32) -> Self {
+        let e = random_block_env();
         Self {
             row,
             col,
             belong: None,
             z_width,
-            environment: random_block_env(),
+            environment: e,
             zoning_set: Vec::new(),
+            product: random_product(e)
         }
     }
 

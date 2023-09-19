@@ -26,11 +26,10 @@ impl State {
     pub fn add_player(&mut self, name: &str, client: AxClient) {
         let mut player = Player::new(client, name.to_string());
 
-        let pos = self.world.rand_block();
-        player.blocks.push(pos);
+        let (r, c) = self.world.rand_block();
+        let mut b = self.world.rc_block_mut(r, c);
 
-        let mut b = self.world.rc_block_mut(pos.0, pos.1);
-        b.belong = Some(name.to_string());
+        player.add_block(b);
 
         if self.players.len() == 0 {
             self.admin = name.to_string();
@@ -75,9 +74,7 @@ impl State {
     }
 
     pub async fn broadcast(&self) {
-        println!("1, start broadcast:");
         for player in self.players.values() {
-            println!("2, send to {}", player.name);
             let message = self.dump_by_one(&player.name);
             tokio::task::spawn(send_message(message, player.client.clone()));
         }

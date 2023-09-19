@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::cst;
+
 #[derive(Serialize, Deserialize)]
 pub struct Resource {
     pub typ: String,
@@ -22,6 +24,7 @@ impl Resource {
     pub fn new(typ: &str, storage: i32, daily: i32) -> Self {
         let mut p = HashMap::new();
         p.insert("base".to_string(), daily);
+        p.insert(cst::BLOCK.to_string(), 0);
 
         Self {
             typ: typ.to_string(),
@@ -41,6 +44,14 @@ impl Resource {
 
     pub fn dumps(&self) -> String {
         format!("{},{},{}", self.typ, self.storage, self.daily)
+    }
+
+    pub fn update_daily(&mut self) {
+        let mut v = 0;
+        for daily in self.projects.values() {
+            v += daily;
+        }
+        self.daily = v;
     }
 }
 
@@ -86,5 +97,14 @@ impl StateResource {
         ];
 
         results.join(":")
+    }
+
+    pub fn update_daily(&mut self) {
+        self.energy.update_daily();
+        self.mineral.update_daily();
+        self.food.update_daily();
+        self.customer.update_daily();
+        self.alloy.update_daily();
+        self.technology.update_daily();
     }
 }

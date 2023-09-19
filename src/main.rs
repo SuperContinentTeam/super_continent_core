@@ -13,10 +13,10 @@ mod player;
 mod reference;
 mod state;
 mod ws;
+mod cst;
 
 fn main() {
     let conf = parse_toml_config();
-
     let ws_addr = conf.ws_server.clone();
 
     let ax_state = new_state_from_meta(&conf);
