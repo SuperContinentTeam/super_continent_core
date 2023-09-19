@@ -1,26 +1,50 @@
+use crate::game::block::Block;
+use crate::game::zoning::Zoning;
 use crate::reference::random_between;
 
-use super::block::Block;
-
-// use super::player::Player;
+pub type BlockSet = Vec<Vec<Block>>;
 
 pub struct World {
     pub width: i32,
-    pub blocks: Vec<Vec<Block>>,
+    pub blocks: BlockSet,
+    pub zoning_set: Vec<Zoning>,
+}
+
+fn initial_world(width: i32) -> (BlockSet, Vec<Zoning>) {
+    let mut blocks: BlockSet = BlockSet::default();
+    let mut zoning_set: Vec<Zoning> = Vec::new();
+
+    for row in 0..width {
+        let mut v = Vec::new();
+        for col in 0..width {
+            let mut b = Block::new(row, col, random_between(3, 6));
+
+            let mut z_index = 0;
+            for zr in 0..b.z_width {
+                for zc in 0..b.z_width {
+                    zoning_set.push(Zoning::new(zr, zc, &b));
+                    b.zoning_set.push(z_index);
+
+                    z_index += 1;
+                }
+            }
+
+            v.push(b);
+        }
+        blocks.push(v);
+    }
+
+    (blocks, zoning_set)
 }
 
 impl World {
     pub fn new(width: i32) -> Self {
-        let mut blocks = Vec::new();
-        for row in 0..width {
-            let mut v = Vec::new();
-            for col in 0..width {
-                v.push(Block::new(row, col));
-            }
-            blocks.push(v);
+        let (blocks, zoning_set) = initial_world(width);
+        Self {
+            width,
+            blocks,
+            zoning_set,
         }
-
-        Self { width, blocks }
     }
 
     fn no_neighbor(&self, r: i32, c: i32) -> bool {
