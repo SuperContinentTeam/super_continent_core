@@ -1,5 +1,6 @@
 use crate::game::block::Block;
 use crate::game::zoning::Zoning;
+use crate::player::Player;
 use crate::reference::random_between;
 
 pub type BlockSet = Vec<Vec<Block>>;
@@ -95,5 +96,16 @@ impl World {
     pub fn rc_block_mut(&mut self, r: i32, c: i32) -> &mut Block {
         let vr = self.blocks.get_mut(r as usize).unwrap();
         vr.get_mut(c as usize).unwrap()
+    }
+
+    pub fn dumps(&self, player: &Player) -> String {
+        let mut v = Vec::new();
+        for vr in &self.blocks {
+            for b in vr {
+                v.push(format!("{},{},{}", b.row, b.col, if b.can_visit(player) {1} else {0}));
+            }
+        }
+
+        v.join(";")
     }
 }

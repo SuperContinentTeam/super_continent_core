@@ -32,6 +32,6 @@ pub fn random_block_env() -> i32 {
     v
 }
 
-pub fn random_between(a:i32, b:i32) -> i32 {
+pub fn random_between(a: i32, b: i32) -> i32 {
     rand::thread_rng().gen_range(a..b)
 }

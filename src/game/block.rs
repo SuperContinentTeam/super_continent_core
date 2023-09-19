@@ -1,4 +1,4 @@
-use crate::reference::random_block_env;
+use crate::{player::Player, reference::random_block_env};
 
 pub struct Block {
     pub row: i32,
@@ -19,6 +19,14 @@ impl Block {
             environment: random_block_env(),
             zoning_set: Vec::new(),
         }
+    }
+
+    pub fn can_visit(&self, player: &Player) -> bool {
+        if let Some(p) = self.belong.as_ref() {
+            return p == &player.name;
+        }
+
+        false
     }
 
     // pub fn can_cross(&self, player: &Player) -> bool {

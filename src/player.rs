@@ -4,7 +4,7 @@ use super::game::resource::StateResource;
 
 pub struct Player{
     pub client: AxClient,
-    pub ready: i32,
+    pub ready: i32, // 0: not ready, 1: ready, 2: observe
     pub name: String,
     pub state_resource: StateResource,
     pub blocks: Vec<(i32, i32)>,
@@ -16,7 +16,7 @@ impl Player {
             client,
             name,
             ready: 0,
-            state_resource: StateResource::default(),
+            state_resource: StateResource::new(),
             blocks: Vec::new()
         }
     }

@@ -52,6 +52,7 @@ fn new_state_from_meta(conf: &Configure) -> AXState {
     let s = State {
         tick: 0,
         players: HashMap::new(),
+        admin: String::new(),
         max_player: conf.max_player,
         status: 0,
         world: World::new(conf.world_size),

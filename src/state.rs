@@ -8,6 +8,7 @@ use crate::{game::world::World, player::Player};
 pub struct State {
     pub tick: u64,
     pub players: HashMap<String, Player>,
+    pub admin: String,
     pub max_player: i32,
     pub status: i32, // 0: pause, 1: running, 2: exit
     pub world: World,
@@ -27,6 +28,13 @@ impl State {
 
         let pos = self.world.rand_block();
         player.blocks.push(pos);
+
+        let mut b = self.world.rc_block_mut(pos.0, pos.1);
+        b.belong = Some(name.to_string());
+
+        if self.players.len() == 0 {
+            self.admin = name.to_string();
+        }
 
         self.players.insert(name.to_string(), player);
     }
@@ -57,9 +65,13 @@ impl State {
 
     pub fn dump_by_one(&self, name: &String) -> String {
         let player = self.players.get(name).unwrap();
-        let results = vec![self.tick.to_string(), player.dumps()];
+        let results = vec![
+            self.tick.to_string(),
+            self.world.dumps(player),
+            player.dumps(),
+        ];
 
-        results.join(";")
+        results.join("|")
     }
 
     pub async fn broadcast(&self) {
@@ -69,31 +81,11 @@ impl State {
         }
     }
 
-    pub async fn broadcast_message(&self, message: &str) {
-        for player in self.players.values() {
-            tokio::task::spawn(send_message(message.to_string(), player.client.clone()));
-        }
-    }
-
-    pub async fn player_ready(&mut self, name: &str, status: i32) {
-        if let Some(p) = self.players.get_mut(name) {
-            p.ready = status;
-        }
-
-        let mut can_start = true;
-        for p in self.players.values() {
-            if p.ready == 0 {
-                can_start = false;
-                break;
-            }
-        }
-
-        if can_start {
-            self.status = 1;
-            // 广播消息, 通知客户的可以开始
-            self.broadcast_message("01").await;
-        }
-    }
+    // pub async fn broadcast_message(&self, message: &str) {
+    //     for player in self.players.values() {
+    //         tokio::task::spawn(send_message(message.to_string(), player.client.clone()));
+    //     }
+    // }
 }
 
 // 运行状态机

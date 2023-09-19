@@ -55,6 +55,17 @@ pub struct StateResource {
 }
 
 impl StateResource {
+    pub fn new() -> Self {
+        Self {
+            energy: Resource::new("e", 1000, 10),
+            mineral: Resource::new("m", 1000, 10),
+            food: Resource::new("f", 1000, 10),
+            customer: Resource::new("c", 500, 5),
+            alloy: Resource::new("a", 500, 5),
+            technology: Resource::new("t", 300, 3),
+        }
+    }
+
     pub fn next(&mut self) {
         self.energy.next();
         self.mineral.next();
@@ -75,18 +86,5 @@ impl StateResource {
         ];
 
         results.join(":")
-    }
-}
-
-impl Default for StateResource {
-    fn default() -> Self {
-        Self {
-            energy: Resource::new("e", 1000, 10),
-            mineral: Resource::new("m", 1000, 10),
-            food: Resource::new("f", 1000, 10),
-            customer: Resource::new("c", 500, 5),
-            alloy: Resource::new("a", 500, 5),
-            technology: Resource::new("t", 300, 3),
-        }
     }
 }

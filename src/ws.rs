@@ -45,7 +45,6 @@ pub async fn handle_connection(raw_stream: TcpStream, addr: SocketAddr, s: AXSta
     println!("{} disconnected", &addr);
 
     tokio::task::spawn(close_websocket(client_clone, s.clone()));
-
 }
 
 pub async fn process_message_from_client(msg: Message, client: AxClient, s: AXState) {
@@ -72,7 +71,15 @@ pub async fn send_message(msg: String, tx: AxClient) {
 
 async fn close_websocket(client: AxClient, state: AXState) {
     let mut s = state.lock().await;
-    let c = client.lock().await;
+    let name = { &client.lock().await.player };
 
-    s.remove_player(&c.player);
+    if name == &s.admin {
+        for c in s.players.values() {
+            let mut ct = c.client.lock().await;
+            ct.tx.disconnect();
+        }
+    }
+
+    s.remove_player(name);
 }
+
