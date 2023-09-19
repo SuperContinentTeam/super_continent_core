@@ -1,13 +1,37 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Resource {
     pub typ: String,
-    pub storage: i64,
-    pub daily: i64,
+    pub storage: i32,
+    pub daily: i32,
+
+    pub projects: HashMap<String, i32>,
+    pub modifiers: Vec<String>, // pub base_daily: i32,
 }
 
+// pub fn fix_daily(r: &Resource) -> i32 {
+//     let origin_daily: i32 = r.projects.values().sum();
+
+//     origin_daily
+// }
+
 impl Resource {
+    pub fn new(typ: &str, storage: i32, daily: i32) -> Self {
+        let mut p = HashMap::new();
+        p.insert("base".to_string(), daily);
+
+        Self {
+            typ: typ.to_string(),
+            storage,
+            daily,
+            projects: p,
+            modifiers: Vec::new(),
+        }
+    }
+
     pub fn next(&mut self) {
         self.storage += self.daily;
         if self.storage < 0 {
@@ -57,36 +81,12 @@ impl StateResource {
 impl Default for StateResource {
     fn default() -> Self {
         Self {
-            energy: Resource {
-                typ: "e".to_string(), // energy
-                storage: 1000,
-                daily: 10,
-            },
-            mineral: Resource {
-                typ: "m".to_string(), // mineral
-                storage: 1000,
-                daily: 10,
-            },
-            food: Resource {
-                typ: "f".to_string(), // food
-                storage: 1000,
-                daily: 10,
-            },
-            customer: Resource {
-                typ: "c".to_string(), // customer
-                storage: 500,
-                daily: 5,
-            },
-            alloy: Resource {
-                typ: "a".to_string(), // alloy
-                storage: 500,
-                daily: 5,
-            },
-            technology: Resource {
-                typ: "t".to_string(), // technology
-                storage: 300,
-                daily: 3,
-            },
+            energy: Resource::new("e", 1000, 10),
+            mineral: Resource::new("m", 1000, 10),
+            food: Resource::new("f", 1000, 10),
+            customer: Resource::new("c", 500, 5),
+            alloy: Resource::new("a", 500, 5),
+            technology: Resource::new("t", 300, 3),
         }
     }
 }

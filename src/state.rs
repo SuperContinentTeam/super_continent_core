@@ -9,8 +9,7 @@ pub struct State {
     pub tick: u64,
     pub players: HashMap<String, Player>,
     pub max_player: i32,
-    // 0: pause, 1: running, 2: exit
-    pub status: i32,
+    pub status: i32, // 0: pause, 1: running, 2: exit
     pub world: World,
 }
 
@@ -27,9 +26,6 @@ impl State {
         let mut player = Player::new(client, name.to_string());
 
         let pos = self.world.rand_block();
-        let b = self.world.blocks.get_mut(&pos).unwrap();
-
-        b.belong = Some(name.to_string());
         player.blocks.push(pos);
 
         self.players.insert(name.to_string(), player);
@@ -37,9 +33,8 @@ impl State {
 
     pub fn remove_player(&mut self, player: &str) {
         if let Some(p) = self.players.remove(player) {
-            for pos in p.blocks {
-                let b = self.world.blocks.get_mut(&pos).unwrap();
-                b.belong = None;
+            for (r, c) in p.blocks {
+                self.world.rc_block_mut(r, c).set_player(None);
             }
         }
         if self.players.len() == 0 {

@@ -24,7 +24,8 @@ impl Player {
 
     pub fn dumps(&self) -> String {
         let results = vec![
-            self.state_resource.dumps()
+            self.state_resource.dumps(),
+            self.blocks.iter().map(|(r,c)|{format!("{},{}",r,c)}).collect::<Vec<String>>().join(":"),
         ];
         results.join(";")
     }

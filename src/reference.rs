@@ -1,7 +1,7 @@
 use crate::state::State;
 use futures_channel::mpsc::UnboundedSender;
 use lazy_static::lazy_static;
-use rand::{distributions::WeightedIndex, prelude::Distribution};
+use rand::{distributions::WeightedIndex, prelude::Distribution, Rng};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::protocol::Message;
@@ -30,4 +30,8 @@ pub fn random_block_env() -> i32 {
     let mut rng = rand::thread_rng();
     let v = ENVIRONMENT_TYPES[WI.sample(&mut rng)];
     v
+}
+
+pub fn random_between(a:i32, b:i32) -> i32 {
+    rand::thread_rng().gen_range(a..b)
 }
