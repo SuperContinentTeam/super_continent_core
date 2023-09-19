@@ -65,6 +65,10 @@ pub async fn process_message_from_client(msg: Message, client: AxClient, s: AXSt
 }
 
 pub async fn send_message(msg: String, tx: AxClient) {
+    tokio::task::spawn(async_send_message(msg, tx));
+}
+
+async fn async_send_message(msg: String, tx: AxClient) {
     let m = msg.as_bytes().to_vec();
     let _ = tx.lock().await.tx.unbounded_send(Message::Binary(m));
 }
@@ -82,4 +86,3 @@ async fn close_websocket(client: AxClient, state: AXState) {
 
     s.remove_player(name);
 }
-

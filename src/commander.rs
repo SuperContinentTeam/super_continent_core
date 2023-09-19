@@ -37,6 +37,7 @@ pub async fn update_state(client: AxClient, s: AXState, status: &str) {
     let mut s = s.lock().await;
 
     let name = &c.player;
+
     if &s.admin == name {
         let mut not_ready = 0;
         for p in s.players.values() {

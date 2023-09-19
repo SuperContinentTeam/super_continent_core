@@ -16,7 +16,8 @@ async def connect():
         await websocket.send(f'0;{name}'.encode())
         await asyncio.sleep(1)
         await websocket.send(b'1;1')
-        
+
+        # if name == "admin":
         asyncio.create_task(start(websocket))
         
         while True:

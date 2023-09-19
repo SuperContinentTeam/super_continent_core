@@ -75,7 +75,9 @@ impl State {
     }
 
     pub async fn broadcast(&self) {
+        println!("1, start broadcast:");
         for player in self.players.values() {
+            println!("2, send to {}", player.name);
             let message = self.dump_by_one(&player.name);
             tokio::task::spawn(send_message(message, player.client.clone()));
         }
