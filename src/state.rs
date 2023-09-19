@@ -35,14 +35,17 @@ impl State {
         self.players.insert(name.to_string(), player);
     }
 
-    // pub fn remove_player(&mut self, player: String) {
-    //     if let Some(p) = self.players.remove(&player) {
-    //         for pos in p.blocks {
-    //             let b = self.world.blocks.get_mut(&pos).unwrap();
-    //             b.belong = None;
-    //         }
-    //     }
-    // }
+    pub fn remove_player(&mut self, player: &str) {
+        if let Some(p) = self.players.remove(player) {
+            for pos in p.blocks {
+                let b = self.world.blocks.get_mut(&pos).unwrap();
+                b.belong = None;
+            }
+        }
+        if self.players.len() == 0 {
+            self.status = 0;
+        }
+    }
 
     pub fn can_join(&self, player: &str) -> i32 {
         let use_number = self.players.len() as i32;

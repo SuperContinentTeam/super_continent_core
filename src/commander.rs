@@ -1,9 +1,12 @@
-use crate::{reference::{AXState, AxClient}, ws::send_message};
+use crate::{
+    reference::{AXState, AxClient},
+    ws::send_message,
+};
 
 pub async fn join_room(name: &str, client: AxClient, s: AXState) {
     println!("Player join the room: {}", name);
     let mut s = s.lock().await;
-    
+
     let can_status = s.can_join(name);
     if can_status != 1 {
         send_message(can_status.to_string(), client.clone()).await;
@@ -11,14 +14,22 @@ pub async fn join_room(name: &str, client: AxClient, s: AXState) {
     }
 
     s.add_player(name, client.clone());
-    client.lock().await.player = Some(name.to_string());
+    client.lock().await.player = name.to_string();
 }
 
 pub async fn ready(status: &str, client: AxClient, s: AXState) {
+    let c = client.lock().await;
+    let mut s = s.lock().await;
+
     let status: i32 = status.parse().unwrap();
-    if let Some(name) = &client.lock().await.player {
-        s.lock().await.player_ready(name, status).await;
-    }
+    s.player_ready(&c.player, status).await;
+}
+
+pub async fn player_leave(client: AxClient, s: AXState) {
+    let c = client.lock().await;
+    let mut s = s.lock().await;
+
+    s.remove_player(&c.player);
 }
 
 pub async fn bypass_binary(options: &str, client: AxClient, s: AXState) {
@@ -31,6 +42,7 @@ pub async fn bypass_binary(options: &str, client: AxClient, s: AXState) {
     match cmd[0] {
         "00" => join_room(cmd[1], client, s).await,
         "01" => ready(cmd[1], client, s).await,
+        "02" => player_leave(client, s).await,
         _ => {}
     }
 }
