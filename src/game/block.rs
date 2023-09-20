@@ -2,7 +2,7 @@ use serde_json::{Value, json};
 
 use crate::reference::{random_block_env, random_product};
 
-use super::Dumps;
+use super::{Dumps, people::People};
 
 pub struct Block {
     pub row: i32,
@@ -11,6 +11,7 @@ pub struct Block {
     pub environment: i32,
     pub z_width: i32,
     pub zoning_set: Vec<i32>,
+    pub people: People,
 
     pub product: (i32, i32, i32),
 }
@@ -25,6 +26,7 @@ impl Block {
             z_width,
             environment: e,
             zoning_set: Vec::new(),
+            people: People::new(0, z_width),
             product: random_product(e),
         }
     }

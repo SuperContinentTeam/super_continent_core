@@ -37,36 +37,18 @@ impl Player {
         self.add_block_product(&block.product);
     }
 
-    // pub fn remove_block(&mut self, block: &mut Block) {
-    //     self.blocks.retain(|x|{x != &(block.row, block.col)});
-    //     block.belong = None;
-    //     let (e, m, f) = block.product;
-    //     self.add_block_product(&(-e, -m, -f));
-    // }
+    pub fn remove_block(&mut self, block: &mut Block) {
+        self.blocks.retain(|x| x != &(block.row, block.col));
+        block.belong = None;
+        let (e, m, f) = block.product;
+        self.add_block_product(&(-e, -m, -f));
+    }
 
     pub fn add_block_product(&mut self, product: &(i32, i32, i32)) {
-        let k = cst::BLOCK.to_string();
         let (e, m, f) = product;
-
-        let e_entry = self
-            .state_resource
-            .energy
-            .projects
-            .entry(k.clone())
-            .or_insert(0);
-        *e_entry += e;
-
-        let m_entry = self
-            .state_resource
-            .mineral
-            .projects
-            .entry(k.clone())
-            .or_insert(0);
-        *m_entry += m;
-
-        let f_entry = self.state_resource.food.projects.entry(k).or_insert(0);
-        *f_entry += f;
-
+        self.state_resource.add_block_product(cst::ENERGY, *e);
+        self.state_resource.add_block_product(cst::MINERAL, *m);
+        self.state_resource.add_block_product(cst::FOOD, *f);
         self.state_resource.update_daily();
     }
 }

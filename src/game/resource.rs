@@ -9,7 +9,6 @@ use super::Dumps;
 
 #[derive(Serialize, Deserialize)]
 pub struct Resource {
-    pub typ: String,
     pub storage: i32,
     pub daily: i32,
 
@@ -24,13 +23,12 @@ pub struct Resource {
 // }
 
 impl Resource {
-    pub fn new(typ: &str, storage: i32, daily: i32) -> Self {
+    pub fn new(storage: i32, daily: i32) -> Self {
         let mut p = HashMap::new();
-        p.insert("base".to_string(), daily);
+        p.insert(cst::BASE.to_string(), daily);
         p.insert(cst::BLOCK.to_string(), 0);
 
         Self {
-            typ: typ.to_string(),
             storage,
             daily,
             projects: p,
@@ -67,54 +65,55 @@ impl Dumps for Resource {
 
 #[derive(Serialize, Deserialize)]
 pub struct StateResource {
-    pub energy: Resource,
-    pub mineral: Resource,
-    pub food: Resource,
-    pub customer: Resource,
-    pub alloy: Resource,
-    pub technology: Resource,
+    pub resource_map: HashMap<String, Resource>,
 }
 
 impl StateResource {
     pub fn new() -> Self {
-        Self {
-            energy: Resource::new("e", 1000, 10),
-            mineral: Resource::new("m", 1000, 10),
-            food: Resource::new("f", 1000, 10),
-            customer: Resource::new("c", 500, 5),
-            alloy: Resource::new("a", 500, 5),
-            technology: Resource::new("t", 300, 3),
-        }
+        let mut x = HashMap::new();
+        x.insert(cst::ENERGY.to_string(), Resource::new(1000, 10));
+        x.insert(cst::MINERAL.to_string(), Resource::new(1000, 10));
+        x.insert(cst::FOOD.to_string(), Resource::new(1000, 10));
+        x.insert(cst::ALLOY.to_string(), Resource::new(500, 5));
+        x.insert(cst::CUSTOMER.to_string(), Resource::new(500, 5));
+        x.insert(cst::TECHNOLOGY.to_string(), Resource::new(300, 3));
+
+        Self { resource_map: x }
     }
 
     pub fn next(&mut self) {
-        self.energy.next();
-        self.mineral.next();
-        self.food.next();
-        self.customer.next();
-        self.alloy.next();
-        self.technology.next();
+        for res in self.resource_map.values_mut() {
+            res.next();
+        }
     }
 
     pub fn update_daily(&mut self) {
-        self.energy.update_daily();
-        self.mineral.update_daily();
-        self.food.update_daily();
-        self.customer.update_daily();
-        self.alloy.update_daily();
-        self.technology.update_daily();
+        for res in self.resource_map.values_mut() {
+            res.update_daily();
+        }
+    }
+
+    // pub fn update_resource_daily(&mut self, typ: &str, value: i32) {
+    //     if let Some(res) = self.resource_map.get_mut(typ) {
+    //         res.daily = value;
+    //     }
+    // }
+
+    pub fn add_block_product(&mut self, typ: &str, value: i32) {
+        let res = self.resource_map.get_mut(typ).unwrap();
+        let entry = res.projects.entry(cst::BLOCK.to_string()).or_insert(0);
+        *entry += value;
     }
 }
 
 impl Dumps for StateResource {
     fn dumps(&self, player: &str) -> Value {
-        json!({
-            cst::ENERGY: self.energy.dumps(player),
-            cst::MINERAL: self.mineral.dumps(player),
-            cst::FOOD: self.food.dumps(player),
-            cst::CUSTOMER: self.customer.dumps(player),
-            cst::ALLOY: self.alloy.dumps(player),
-            cst::TECHNOLOGY: self.technology.dumps(player)
-        })
+        let v: HashMap<String, Value> = self
+            .resource_map
+            .iter()
+            .map(|(typ, res)| (typ.to_string(), res.dumps(player)))
+            .collect();
+
+        json!(v)
     }
 }
