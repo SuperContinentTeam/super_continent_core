@@ -61,7 +61,8 @@ impl Dumps for Block {
             "can_cross": false,
             "product": self.product,
             "z_width": self.z_width,
-            "zoning_set": self.zoning_set
+            "zoning_set": self.zoning_set,
+            "belong": self.belong
         })
     }
 }
