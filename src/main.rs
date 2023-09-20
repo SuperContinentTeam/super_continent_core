@@ -1,4 +1,5 @@
 use crate::meta::parse_toml_config;
+use assets::parse_all;
 use game::world::World;
 use meta::Configure;
 use reference::AXState;
@@ -6,20 +7,26 @@ use state::{run_state, State};
 use std::{collections::HashMap, sync::Arc};
 use tokio::{net::TcpListener, sync::Mutex};
 
+mod assets;
 mod commander;
+mod cst;
 mod game;
 mod meta;
+mod parse;
 mod player;
 mod reference;
 mod state;
 mod ws;
-mod cst;
-mod assets;
 
 fn main() {
-    let conf = parse_toml_config();
-    let ws_addr = conf.ws_server.clone();
+    parse_all();
+    start_server();
+}
 
+fn start_server() {
+    let conf = parse_toml_config();
+
+    let ws_addr = conf.ws_server.clone();
     let ax_state = new_state_from_meta(&conf);
 
     let s1 = ax_state.clone();

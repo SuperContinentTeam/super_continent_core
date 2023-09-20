@@ -2,7 +2,7 @@ use crate::state::State;
 use futures_channel::mpsc::UnboundedSender;
 use lazy_static::lazy_static;
 use rand::{distributions::WeightedIndex, prelude::Distribution, Rng};
-use std::{net::SocketAddr, sync::Arc};
+use std::{fs::File, io::Read, net::SocketAddr, sync::Arc};
 use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::protocol::Message;
 
@@ -30,6 +30,21 @@ lazy_static! {
     pub static ref BLOCK_PRODUCT: [String; 4] = ["e".to_string(), "m".to_string(), "f".to_string(), String::new()];
     // 产物权重表
     pub static ref PI: WeightedIndex<i32> = WeightedIndex::new([3, 4, 5, 6].iter()).unwrap();
+}
+
+pub fn read_file(filepath: &str) -> String {
+    let mut file_object = match File::open(filepath) {
+        Ok(f) => f,
+        Err(e) => panic!("No such file {} exception: {}", filepath, e),
+    };
+
+    let mut content = String::new();
+    match file_object.read_to_string(&mut content) {
+        Ok(r) => r,
+        Err(e) => panic!("Error reading file: {}", e),
+    };
+
+    content
 }
 
 pub fn random_block_env() -> i32 {
