@@ -8,49 +8,47 @@ use crate::game::zoning::Zoning;
 use crate::reference::random_between;
 
 use super::Dumps;
-
-pub type BlockSet = Vec<Vec<Block>>;
+pub type BlockMap = HashMap<(i32, i32), Block>;
+pub type ZoningMap = HashMap<(i32, i32, i32), Zoning>;
 
 pub struct World {
     pub width: i32,
-    pub blocks: BlockSet,
-    pub zoning_set: Vec<Zoning>,
+    pub blocks: BlockMap,
+    pub zoning_map: ZoningMap,
 }
 
-fn initial_world(width: i32) -> (BlockSet, Vec<Zoning>) {
-    let mut blocks: BlockSet = BlockSet::default();
-    let mut zoning_set: Vec<Zoning> = Vec::new();
+fn initial_world(width: i32) -> (BlockMap, ZoningMap) {
+    let mut blocks: BlockMap = BlockMap::default();
+    let mut zoning_map: ZoningMap = ZoningMap::default();
 
     for row in 0..width {
-        let mut v = Vec::new();
         for col in 0..width {
-            let mut b = Block::new(row, col, random_between(3, 6));
-
-            let mut z_index = 0;
-            for zr in 0..b.z_width {
-                for zc in 0..b.z_width {
-                    zoning_set.push(Zoning::new(zr, zc, &b));
-                    b.zoning_set.push(z_index);
-
-                    z_index += 1;
-                }
-            }
-
-            v.push(b);
+            blocks.insert((row, col), Block::new(row, col, random_between(3, 6)));
         }
-        blocks.push(v);
     }
 
-    (blocks, zoning_set)
+    let mut z_index = 0;
+    for (b_pos, block) in blocks.iter_mut() {
+        for zr in 0..block.z_width {
+            for zc in 0..block.z_width {
+                zoning_map.insert((z_index, zr, zc), Zoning::new(zc, zr, *b_pos));
+                block.zoning_set.push(z_index);
+
+                z_index += 1;
+            }
+        }
+    }
+
+    (blocks, zoning_map)
 }
 
 impl World {
     pub fn new(width: i32) -> Self {
-        let (blocks, zoning_set) = initial_world(width);
+        let (blocks, zoning_map) = initial_world(width);
         Self {
             width,
             blocks,
-            zoning_set,
+            zoning_map,
         }
     }
 
@@ -66,9 +64,9 @@ impl World {
             (r + 1, c + 1),
         ];
 
-        for (r, c) in neighbors {
-            if 0 <= r && r < self.width && 0 <= c && c < self.width {
-                let b = self.rc_block(r, c);
+        for pos in &neighbors {
+            if 0 <= pos.0 && pos.0 < self.width && 0 <= pos.1 && pos.1 < self.width {
+                let b = &self.blocks[pos];
                 if b.belong.is_some() {
                     return false;
                 }
@@ -95,21 +93,10 @@ impl World {
         (r_row, r_col)
     }
 
-    pub fn rc_block(&self, r: i32, c: i32) -> &Block {
-        &self.blocks[r as usize][c as usize]
-    }
-
-    pub fn rc_block_mut(&mut self, r: i32, c: i32) -> &mut Block {
-        let vr = self.blocks.get_mut(r as usize).unwrap();
-        vr.get_mut(c as usize).unwrap()
-    }
-
     pub fn query_blocks(&self, name: Option<&str>) -> Vec<&Block> {
         let mut v = Vec::new();
-        for vr in &self.blocks {
-            for block in vr {
-                v.push(block);
-            }
+        for b in self.blocks.values() {
+            v.push(b);
         }
 
         if let Some(player) = name {

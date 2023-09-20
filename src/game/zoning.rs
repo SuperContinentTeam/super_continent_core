@@ -1,5 +1,3 @@
-use crate::game::block::Block;
-
 pub struct Zoning {
     pub row: i32,
     pub col: i32,
@@ -8,11 +6,11 @@ pub struct Zoning {
 
 
 impl Zoning {
-    pub fn new(row: i32, col: i32, block: &Block) -> Self {
+    pub fn new(row: i32, col: i32, block_pos: (i32, i32)) -> Self {
         Self {
             row,
             col,
-            block_pos: (block.row, block.col),
+            block_pos,
         }
     }
 }

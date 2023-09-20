@@ -30,8 +30,7 @@ impl State {
     pub fn add_player(&mut self, name: &str, client: AxClient) {
         let mut player = Player::new(client, name.to_string());
 
-        let (r, c) = self.world.rand_block();
-        let mut b = self.world.rc_block_mut(r, c);
+        let b = self.world.blocks.get_mut(&self.world.rand_block()).unwrap();
 
         player.add_block(b);
 
@@ -44,8 +43,8 @@ impl State {
 
     pub fn remove_player(&mut self, player: &str) {
         if let Some(p) = self.players.remove(player) {
-            for (r, c) in p.blocks {
-                self.world.rc_block_mut(r, c).set_player(None);
+            for pos in p.blocks {
+                self.world.blocks.get_mut(&pos).unwrap().set_player(None);
             }
         }
         if self.players.len() == 0 {
