@@ -2,7 +2,7 @@ use serde_json::{json, Value};
 
 use crate::cst;
 use crate::game::Dumps;
-use crate::reference::{AXState, AxClient, TIME_FLOW, random_between};
+use crate::reference::{AXState, AxClient, TIME_FLOW};
 use std::collections::HashMap;
 
 use crate::ws::send_message;
@@ -31,7 +31,7 @@ impl State {
         let mut player = Player::new(client, name.to_string());
 
         let b = self.world.blocks.get_mut(&self.world.rand_block()).unwrap();
-        b.people.quantity = cst::NEW_BLOCK_PEOPLE;
+        b.people.quantity = cst::PLAYER_NEW_BLOCK_PEOPLE;
 
         player.add_block(b);
 

@@ -15,4 +15,4 @@ pub const DUMP_BLOCK: &str = "blocks";
 pub const DUMP_PLAYER_RESOURCE: &str = "player_resource";
 pub const DUMP_PLAYER: &str = "player";
 
-pub const NEW_BLOCK_PEOPLE: i32 = 20;
+pub const PLAYER_NEW_BLOCK_PEOPLE: i32 = 20;
