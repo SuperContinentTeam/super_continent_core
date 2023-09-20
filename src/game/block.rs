@@ -1,4 +1,8 @@
-use crate::{player::Player, reference::{random_block_env, random_product}};
+use serde_json::{Value, json};
+
+use crate::reference::{random_block_env, random_product};
+
+use super::Dumps;
 
 pub struct Block {
     pub row: i32,
@@ -8,7 +12,7 @@ pub struct Block {
     pub z_width: i32,
     pub zoning_set: Vec<i32>,
 
-    pub product: (i32, i32, i32)
+    pub product: (i32, i32, i32),
 }
 
 impl Block {
@@ -21,13 +25,13 @@ impl Block {
             z_width,
             environment: e,
             zoning_set: Vec::new(),
-            product: random_product(e)
+            product: random_product(e),
         }
     }
 
-    pub fn can_visit(&self, player: &Player) -> bool {
+    pub fn can_visit(&self, player: &str) -> bool {
         if let Some(p) = self.belong.as_ref() {
-            return p == &player.name;
+            return p == player;
         }
 
         false
@@ -42,5 +46,20 @@ impl Block {
 
     pub fn set_player(&mut self, player: Option<String>) {
         self.belong = player;
+    }
+}
+
+impl Dumps for Block {
+    fn dumps(&self, player: &str) -> Value {
+        json!({
+            "row": self.row,
+            "col": self.col,
+            "env": self.environment,
+            "can_visit": if self.can_visit(player) { 1 } else { 0 },
+            "can_cross": false,
+            "product": self.product,
+            "z_width": self.z_width,
+            "zoning_set": self.zoning_set
+        })
     }
 }

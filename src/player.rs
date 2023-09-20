@@ -1,4 +1,10 @@
-use crate::{game::block::Block, reference::AxClient, cst};
+use serde_json::json;
+
+use crate::{
+    cst,
+    game::{block::Block, Dumps},
+    reference::AxClient,
+};
 
 use super::game::resource::StateResource;
 
@@ -21,18 +27,6 @@ impl Player {
         }
     }
 
-    pub fn dumps(&self) -> String {
-        let results = vec![
-            self.state_resource.dumps(),
-            self.blocks
-                .iter()
-                .map(|(r, c)| format!("{},{}", r, c))
-                .collect::<Vec<String>>()
-                .join(":"),
-        ];
-        results.join(";")
-    }
-
     pub fn next(&mut self) {
         self.state_resource.next();
     }
@@ -43,15 +37,31 @@ impl Player {
         self.add_block_product(&block.product);
     }
 
+    // pub fn remove_block(&mut self, block: &mut Block) {
+    //     self.blocks.retain(|x|{x != &(block.row, block.col)});
+    //     block.belong = None;
+    //     let (e, m, f) = block.product;
+    //     self.add_block_product(&(-e, -m, -f));
+    // }
+
     pub fn add_block_product(&mut self, product: &(i32, i32, i32)) {
-        println!("in add block product");
         let k = cst::BLOCK.to_string();
         let (e, m, f) = product;
 
-        let e_entry = self.state_resource.energy.projects.entry(k.clone()).or_insert(0);
+        let e_entry = self
+            .state_resource
+            .energy
+            .projects
+            .entry(k.clone())
+            .or_insert(0);
         *e_entry += e;
 
-        let m_entry = self.state_resource.mineral.projects.entry(k.clone()).or_insert(0);
+        let m_entry = self
+            .state_resource
+            .mineral
+            .projects
+            .entry(k.clone())
+            .or_insert(0);
         *m_entry += m;
 
         let f_entry = self.state_resource.food.projects.entry(k).or_insert(0);
@@ -59,23 +69,13 @@ impl Player {
 
         self.state_resource.update_daily();
     }
+}
 
-    // pub fn update_player_resource_daily(&self, blocks: Vec<&Block>) {
-    //     let mut e = 0;
-    //     let mut m = 0;
-    //     let mut f = 0;
-
-    //     for block in blocks {
-    //         if let Some(belong) = &block.belong {
-    //             if belong != &self.name {
-    //                 continue;
-    //             }
-
-    //             let (ve, vm, vf) = &block.product;
-    //             e += ve;
-    //             m += vm;
-    //             f += vf;
-    //         }
-    //     }
-    // }
+impl Dumps for Player {
+    fn dumps(&self, player: &str) -> serde_json::Value {
+        json!({
+            cst::DUMP_PLAYER_RESOURCE: self.state_resource.dumps(player),
+            cst::DUMP_BLOCK: self.blocks
+        })
+    }
 }

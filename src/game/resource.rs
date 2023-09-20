@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 use crate::cst;
+
+use super::Dumps;
 
 #[derive(Serialize, Deserialize)]
 pub struct Resource {
@@ -42,16 +45,23 @@ impl Resource {
         }
     }
 
-    pub fn dumps(&self) -> String {
-        format!("{},{},{}", self.typ, self.storage, self.daily)
-    }
-
     pub fn update_daily(&mut self) {
         let mut v = 0;
         for daily in self.projects.values() {
             v += daily;
         }
         self.daily = v;
+    }
+}
+
+impl Dumps for Resource {
+    fn dumps(&self, _player: &str) -> Value {
+        json!({
+            "storage": self.storage,
+            "daily": self.daily,
+            "projects": self.projects,
+            "modifiers": self.modifiers
+        })
     }
 }
 
@@ -86,19 +96,6 @@ impl StateResource {
         self.technology.next();
     }
 
-    pub fn dumps(&self) -> String {
-        let results = vec![
-            self.energy.dumps(),
-            self.mineral.dumps(),
-            self.food.dumps(),
-            self.customer.dumps(),
-            self.alloy.dumps(),
-            self.technology.dumps(),
-        ];
-
-        results.join(":")
-    }
-
     pub fn update_daily(&mut self) {
         self.energy.update_daily();
         self.mineral.update_daily();
@@ -106,5 +103,18 @@ impl StateResource {
         self.customer.update_daily();
         self.alloy.update_daily();
         self.technology.update_daily();
+    }
+}
+
+impl Dumps for StateResource {
+    fn dumps(&self, player: &str) -> Value {
+        json!({
+            cst::ENERGY: self.energy.dumps(player),
+            cst::MINERAL: self.mineral.dumps(player),
+            cst::FOOD: self.food.dumps(player),
+            cst::CUSTOMER: self.customer.dumps(player),
+            cst::ALLOY: self.alloy.dumps(player),
+            cst::TECHNOLOGY: self.technology.dumps(player)
+        })
     }
 }

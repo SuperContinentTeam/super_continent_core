@@ -1,3 +1,7 @@
+use serde_json::{json, Value};
+
+use crate::cst;
+use crate::game::Dumps;
 use crate::reference::{AXState, AxClient, TIME_FLOW};
 use std::collections::HashMap;
 
@@ -62,21 +66,10 @@ impl State {
         1
     }
 
-    pub fn dump_by_one(&self, name: &String) -> String {
-        let player = self.players.get(name).unwrap();
-        let results = vec![
-            self.tick.to_string(),
-            self.world.dumps(player),
-            player.dumps(),
-        ];
-
-        results.join("|")
-    }
-
     pub async fn broadcast(&self) {
         for player in self.players.values() {
-            let message = self.dump_by_one(&player.name);
-            tokio::task::spawn(send_message(message, player.client.clone()));
+            let message = self.dumps(&player.name);
+            tokio::task::spawn(send_message(message.to_string(), player.client.clone()));
         }
     }
 
@@ -101,5 +94,17 @@ pub async fn run_state(state: AXState) {
             break;
         }
         tokio::time::sleep(time_flow).await;
+    }
+}
+
+impl Dumps for State {
+    fn dumps(&self, player: &str) -> Value {
+        let p = self.players.get(player).unwrap();
+
+        json!({
+            cst::DUMP_TICK: self.tick,
+            cst::DUMP_WORLD: self.world.dumps(player),
+            cst::DUMP_PLAYER: p.dumps(player)
+        })
     }
 }

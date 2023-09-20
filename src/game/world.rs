@@ -1,7 +1,13 @@
+use std::collections::HashMap;
+
+use serde_json::{json, Value};
+
+use crate::cst;
 use crate::game::block::Block;
 use crate::game::zoning::Zoning;
-use crate::player::Player;
 use crate::reference::random_between;
+
+use super::Dumps;
 
 pub type BlockSet = Vec<Vec<Block>>;
 
@@ -98,35 +104,42 @@ impl World {
         vr.get_mut(c as usize).unwrap()
     }
 
-    pub fn dumps(&self, player: &Player) -> String {
-        let mut v = Vec::new();
-        for vr in &self.blocks {
-            for b in vr {
-                v.push(format!(
-                    "{},{},{}",
-                    b.row,
-                    b.col,
-                    if b.can_visit(player) { 1 } else { 0 }
-                ));
-            }
-        }
-
-        v.join(";")
-    }
-
-    pub fn query_player_blocks(&self, name: &str) -> Vec<&Block> {
+    pub fn query_blocks(&self, name: Option<&str>) -> Vec<&Block> {
         let mut v = Vec::new();
         for vr in &self.blocks {
             for block in vr {
-                if let Some(belong) = &block.belong {
-                    if belong == name {
-                        v.push(block);
-                    }
-                }
+                v.push(block);
             }
+        }
+
+        if let Some(player) = name {
+            v.retain(|x| {
+                if let Some(belong) = &x.belong {
+                    belong == player
+                } else {
+                    false
+                }
+            })
         }
 
         v
     }
 
+    pub fn dumps_for_blocks(&self, player: &str) -> Value {
+        let v = self
+            .query_blocks(None)
+            .iter()
+            .map(|b| (format!("{},{}", b.row, b.col), b.dumps(player)))
+            .collect::<HashMap<String, Value>>();
+
+        json!(v)
+    }
+}
+
+impl Dumps for World {
+    fn dumps(&self, player: &str) -> Value {
+        json!({
+            cst::DUMP_BLOCK: self.dumps_for_blocks(player)
+        })
+    }
 }

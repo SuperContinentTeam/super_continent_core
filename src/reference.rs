@@ -43,14 +43,13 @@ pub fn random_between(a: i32, b: i32) -> i32 {
 }
 
 pub fn random_product(ev: i32) -> (i32, i32, i32) {
-    println!("in random product");
     let mut e = 0;
     let mut m = 0;
     let mut f = 0;
 
     for _ in 0..BLOCK_PRODUCT.len() {
         let mut rng = rand::thread_rng();
-        let p = random_between(0, 5);
+        let p = random_between(0, 3);
         match BLOCK_PRODUCT[PI.sample(&mut rng)].as_str() {
             "e" => e += p,
             "m" => m += p,

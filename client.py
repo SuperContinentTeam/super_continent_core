@@ -23,7 +23,11 @@ async def connect():
         while True:
             try:
                 recv = await websocket.recv()
-                print(recv.decode())
+                r = recv.decode()
+                # print()
+                with open("demo.json", "w", encoding="utf-8") as f:
+                    f.write(r)
+
             except Exception as e:
                 _ = e
                 break
