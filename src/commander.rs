@@ -1,6 +1,6 @@
 use crate::{
     reference::{AXState, AxClient},
-    ws::send_message, game::block::Block,
+    ws::send_message,
 };
 
 pub async fn join_room(client: AxClient, s: AXState, name: &str) {

@@ -14,6 +14,7 @@ mod reference;
 mod state;
 mod ws;
 mod cst;
+mod assets;
 
 fn main() {
     let conf = parse_toml_config();
