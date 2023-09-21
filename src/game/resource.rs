@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::{cst, assets::event::Events};
+use crate::cst;
 
 use super::Dumps;
 
@@ -13,7 +13,6 @@ pub struct Resource {
     pub daily: i32,
 
     pub projects: HashMap<String, i32>,
-    pub modifiers: Events, // pub base_daily: i32,
 }
 
 // pub fn fix_daily(r: &Resource) -> i32 {
@@ -25,14 +24,15 @@ pub struct Resource {
 impl Resource {
     pub fn new(storage: i32, daily: i32) -> Self {
         let mut p = HashMap::new();
+        // 基础资源产出
         p.insert(cst::BASE.to_string(), daily);
+        // 地块资源产出
         p.insert(cst::BLOCK.to_string(), 0);
 
         Self {
             storage,
             daily,
             projects: p,
-            modifiers: Vec::new(),
         }
     }
 
@@ -42,14 +42,6 @@ impl Resource {
             self.storage = 0
         }
     }
-
-    pub fn update_daily(&mut self) {
-        let mut v = 0;
-        for daily in self.projects.values() {
-            v += daily;
-        }
-        self.daily = v;
-    }
 }
 
 impl Dumps for Resource {
@@ -57,8 +49,7 @@ impl Dumps for Resource {
         json!({
             "storage": self.storage,
             "daily": self.daily,
-            "projects": self.projects,
-            "modifiers": self.modifiers
+            "projects": self.projects
         })
     }
 }
@@ -87,11 +78,11 @@ impl StateResource {
         }
     }
 
-    pub fn update_daily(&mut self) {
-        for res in self.resource_map.values_mut() {
-            res.update_daily();
-        }
-    }
+    // pub fn update_daily(&mut self) {
+    //     for res in self.resource_map.values_mut() {
+    //         res.update_daily();
+    //     }
+    // }
 
     // pub fn update_resource_daily(&mut self, typ: &str, value: i32) {
     //     if let Some(res) = self.resource_map.get_mut(typ) {
@@ -103,7 +94,8 @@ impl StateResource {
         let res = self.resource_map.get_mut(typ).unwrap();
         let entry = res.projects.entry(cst::BLOCK.to_string()).or_insert(0);
         *entry += value;
-        res.update_daily();
+        
+        res.daily += value;
     }
 }
 

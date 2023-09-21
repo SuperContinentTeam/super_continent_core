@@ -2,14 +2,11 @@ use std::collections::HashMap;
 
 use crate::{asset_parse::to_tokens, reference::read_file, cst};
 
+use super::Modifier;
+
 pub type Events = Vec<String>;
 
-#[derive(Debug)]
-pub struct Modifier {
-    pub entity: String,
-    pub method: String,
-    pub value: f64,
-}
+
 
 pub fn parse_event(area: &str) -> HashMap<String, Vec<Modifier>> {
     let mut result: HashMap<String, HashMap<String, String>> = HashMap::new();
@@ -42,6 +39,7 @@ pub fn parse_event(area: &str) -> HashMap<String, Vec<Modifier>> {
         for (code, value) in modifier_map {
             let cs: Vec<&str> = code.split(":").collect();
             let modifier = Modifier {
+                code: cst::BLOCK.to_string(),
                 entity: cs[0].to_string(),
                 method: cs[1].to_string(),
                 value: value.parse::<f64>().unwrap(),

@@ -37,12 +37,12 @@ impl Player {
         self.add_block_product(&block.product);
     }
 
-    pub fn remove_block(&mut self, block: &mut Block) {
-        self.blocks.retain(|x| x != &(block.row, block.col));
-        block.belong = None;
-        let (e, m, f) = block.product;
-        self.add_block_product(&(-e, -m, -f));
-    }
+    // pub fn remove_block(&mut self, block: &mut Block) {
+    //     self.blocks.retain(|x| x != &(block.row, block.col));
+    //     block.belong = None;
+    //     let (e, m, f) = block.product;
+    //     self.add_block_product(&(-e, -m, -f));
+    // }
 
     pub fn add_block_product(&mut self, product: &(i32, i32, i32)) {
         let (e, m, f) = product;
