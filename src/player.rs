@@ -49,7 +49,6 @@ impl Player {
         self.state_resource.add_block_product(cst::ENERGY, *e);
         self.state_resource.add_block_product(cst::MINERAL, *m);
         self.state_resource.add_block_product(cst::FOOD, *f);
-        self.state_resource.update_daily();
     }
 }
 

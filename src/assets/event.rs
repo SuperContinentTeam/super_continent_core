@@ -1,18 +1,19 @@
 use std::collections::HashMap;
 
-use crate::{asset_parse::to_tokens, reference::read_file};
+use crate::{asset_parse::to_tokens, reference::read_file, cst};
+
+pub type Events = Vec<String>;
 
 #[derive(Debug)]
 pub struct Modifier {
-    pub code: String,
-    pub resource: String,
+    pub entity: String,
     pub method: String,
     pub value: f64,
 }
 
-pub fn parse_event() -> HashMap<String, Vec<Modifier>> {
+pub fn parse_event(area: &str) -> HashMap<String, Vec<Modifier>> {
     let mut result: HashMap<String, HashMap<String, String>> = HashMap::new();
-    let content = read_file("data/common/events.txt");
+    let content = read_file(&format!("data/common/events/{}.txt", area));
     let mut stack: Vec<String> = Vec::new();
     let mut temp_modifier: HashMap<String, String> = HashMap::new();
 
@@ -41,9 +42,8 @@ pub fn parse_event() -> HashMap<String, Vec<Modifier>> {
         for (code, value) in modifier_map {
             let cs: Vec<&str> = code.split(":").collect();
             let modifier = Modifier {
-                code: cs[0].to_string(),
-                resource: cs[1].to_string(),
-                method: cs[2].to_string(),
+                entity: cs[0].to_string(),
+                method: cs[1].to_string(),
                 value: value.parse::<f64>().unwrap(),
             };
             temp.push(modifier);

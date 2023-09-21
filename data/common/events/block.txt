@@ -1,0 +1,23 @@
+env_n2 = {
+    energy:mul = -0.5;
+    mineral:mul = -0.5;
+    food:mul = 0;
+}
+
+env_n1 = {
+    energy:mul = -0.2;
+    mineral:mul = -0.2;
+    food:mul = -0.2;
+}
+
+env_p1 = {
+    energy:mul = 0.2;
+    mineral:mul = 0.2;
+    food:mul = 0.2;
+}
+
+env_p2 = {
+    energy:mul = 0.5;
+    mineral:mul = 0.5;
+    food:mul = 0.5;
+}

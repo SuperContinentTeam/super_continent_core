@@ -1,6 +1,6 @@
 use serde_json::{Value, json};
 
-use crate::reference::{random_block_env, random_product};
+use crate::{reference::{random_block_env, random_product}, assets::event::Events};
 
 use super::{Dumps, people::People};
 
@@ -14,7 +14,8 @@ pub struct Block {
     pub people: People,
 
     pub product: (i32, i32, i32),
-}
+    pub events: Vec<Events>,
+}   
 
 impl Block {
     pub fn new(row: i32, col: i32, z_width: i32) -> Self {
@@ -28,6 +29,7 @@ impl Block {
             zoning_set: Vec::new(),
             people: People::new(0, z_width),
             product: random_product(e),
+            events: Vec::new(),
         }
     }
 

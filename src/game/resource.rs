@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::cst;
+use crate::{cst, assets::event::Events};
 
 use super::Dumps;
 
@@ -13,7 +13,7 @@ pub struct Resource {
     pub daily: i32,
 
     pub projects: HashMap<String, i32>,
-    pub modifiers: Vec<String>, // pub base_daily: i32,
+    pub modifiers: Events, // pub base_daily: i32,
 }
 
 // pub fn fix_daily(r: &Resource) -> i32 {
@@ -103,6 +103,7 @@ impl StateResource {
         let res = self.resource_map.get_mut(typ).unwrap();
         let entry = res.projects.entry(cst::BLOCK.to_string()).or_insert(0);
         *entry += value;
+        res.update_daily();
     }
 }
 
