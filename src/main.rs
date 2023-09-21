@@ -12,7 +12,7 @@ mod commander;
 mod cst;
 mod game;
 mod meta;
-mod parse;
+mod asset_parse;
 mod player;
 mod reference;
 mod state;

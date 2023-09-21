@@ -1,18 +1,33 @@
 const KEY_WORDS: [&str; 4] = [";", "{", "}", "="];
+const WHITE_WORDS: [&str; 3] = [" ", "\t", "\n"];
 
 fn iter_string(content: &str) -> Vec<String> {
-    let mut v = content
-        .as_bytes()
-        .iter()
-        .map(|x| {
-            let c = *x as char;
-            c.to_string()
-        })
-        .collect::<Vec<String>>();
+    let mut result: Vec<String> = Vec::new();
 
-    v.retain(|x| x != " " && x != "\t" && x != "\n");
+    let mut skip = false;
+    for v in content.as_bytes() {
+        let c = *v as char;
+        let s = c.to_string();
 
-    v
+        if &s == "#" {
+            skip = true;
+        }
+        if &s == "\n" && skip {
+            skip = false;
+        }
+
+        if skip {
+            continue;
+        }
+
+        if WHITE_WORDS.contains(&s.as_str()) {
+            continue;
+        }
+
+        result.push(s);
+    }
+
+    result
 }
 
 pub fn to_tokens(content: &str) -> Vec<String> {

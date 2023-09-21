@@ -2,7 +2,7 @@ use crate::state::State;
 use futures_channel::mpsc::UnboundedSender;
 use lazy_static::lazy_static;
 use rand::{distributions::WeightedIndex, prelude::Distribution, Rng};
-use std::{fs::File, io::Read, net::SocketAddr, sync::Arc};
+use std::{env, fs::File, io::Read, net::SocketAddr, path::PathBuf, sync::Arc};
 use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::protocol::Message;
 
@@ -18,6 +18,7 @@ pub type AxClient = Arc<Mutex<Client>>;
 pub type AXState = Arc<Mutex<State>>;
 
 lazy_static! {
+    pub static ref CURRENT_DIR:PathBuf = env::current_dir().unwrap();
     // 参数配置
     pub static ref STATE_CONFIG: Arc<Mutex<serde_json::Value>> = Arc::new(Mutex::new(serde_json::Value::Null));
     // 时间刻
@@ -32,10 +33,28 @@ lazy_static! {
     pub static ref PI: WeightedIndex<i32> = WeightedIndex::new([3, 4, 5, 6].iter()).unwrap();
 }
 
+fn fix_path(filepath: &str) -> PathBuf {
+    let ps: Vec<&str> = filepath.split("/").collect();
+    let mut cursor = PathBuf::new();
+
+    for p in ps {
+        cursor = cursor.join(p);
+    }
+
+    if !cursor.is_absolute() {
+        cursor = CURRENT_DIR.join(cursor);
+    }
+
+    cursor
+}
+
 pub fn read_file(filepath: &str) -> String {
-    let mut file_object = match File::open(filepath) {
+    let p = fix_path(filepath);
+    let str_p = p.to_str().unwrap();
+    let mut file_object = match File::open(&p) {
         Ok(f) => f,
-        Err(e) => panic!("No such file {} exception: {}", filepath, e),
+        Err(e) => panic!("No such file {} exception: {}", str_p, e)
+        
     };
 
     let mut content = String::new();
