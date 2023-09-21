@@ -1,0 +1,20 @@
+cast_stell = {
+    tier = 0;
+    cost = 300;
+    fronts = {}
+}
+
+water_wheel = {
+    tier = 0;
+    cost = 300;
+    fronts = {}
+}
+
+steel_tool = {
+    tier = 1;
+    cost = 1000;
+    fronts = {
+        cast_stell;
+        water_wheel;
+    }
+}

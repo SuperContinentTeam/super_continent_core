@@ -13,8 +13,8 @@ pub struct Block {
     pub zoning_set: Vec<i32>,
     pub people: People,
 
-    pub product: (i32, i32, i32),
-    pub events: Vec<Events>,
+    pub product: (f64, f64, f64),
+    pub events: Events,
 }   
 
 impl Block {

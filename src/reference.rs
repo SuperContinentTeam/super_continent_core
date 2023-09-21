@@ -53,8 +53,7 @@ pub fn read_file(filepath: &str) -> String {
     let str_p = p.to_str().unwrap();
     let mut file_object = match File::open(&p) {
         Ok(f) => f,
-        Err(e) => panic!("No such file {} exception: {}", str_p, e)
-        
+        Err(e) => panic!("No such file {} exception: {}", str_p, e),
     };
 
     let mut content = String::new();
@@ -76,7 +75,7 @@ pub fn random_between(a: i32, b: i32) -> i32 {
     rand::thread_rng().gen_range(a..b)
 }
 
-pub fn random_product(ev: i32) -> (i32, i32, i32) {
+pub fn random_product(ev: i32) -> (f64, f64, f64) {
     let mut e = 0;
     let mut m = 0;
     let mut f = 0;
@@ -105,5 +104,5 @@ pub fn random_product(ev: i32) -> (i32, i32, i32) {
     let fm = (m as f64) * modifier;
     let ff = (f as f64) * modifier;
 
-    (fe as i32, fm as i32, ff as i32)
+    (fe, fm, ff)
 }

@@ -1,6 +1,7 @@
 use serde_json::json;
 
 use crate::{
+    assets::{event::Events, EVENTS},
     cst,
     game::{block::Block, Dumps},
     reference::AxClient,
@@ -14,6 +15,8 @@ pub struct Player {
     pub name: String,
     pub state_resource: StateResource,
     pub blocks: Vec<(i32, i32)>,
+
+    pub events: Events,
 }
 
 impl Player {
@@ -24,6 +27,7 @@ impl Player {
             ready: 0,
             state_resource: StateResource::new(),
             blocks: Vec::new(),
+            events: Vec::new(),
         }
     }
 
@@ -34,7 +38,38 @@ impl Player {
     pub fn add_block(&mut self, block: &mut Block) {
         self.blocks.push((block.row, block.col));
         block.belong = Some(self.name.clone());
-        self.add_block_product(&block.product);
+        self.update_daily_with_block(block, true);
+    }
+
+    pub fn update_daily_with_block(&mut self, block: &Block, is_add: bool) {
+        let neg = if is_add { 1.0 } else { -1.0 };
+        let v = (
+            self.get_value_with_modifier(cst::BLOCK, cst::ENERGY, block.product.0 * neg),
+            self.get_value_with_modifier(cst::BLOCK, cst::MINERAL, block.product.1 * neg),
+            self.get_value_with_modifier(cst::BLOCK, cst::FOOD, block.product.2 * neg),
+        );
+
+        self.state_resource.update_daily_with_block(v);
+    }
+
+    pub fn get_value_with_modifier(&self, code: &str, entity: &str, value: f64) -> f64 {
+        let mut a1 = value;
+        let mut a2 = 1.0;
+
+        for event in &self.events {
+            for modifier in &EVENTS[event] {
+                if modifier.code == code && modifier.entity == entity {
+                    if modifier.method == cst::MODIFIER_METHOD_ADD {
+                        a1 += modifier.value;
+                    }
+                    if modifier.method == cst::MODIFIER_METHOD_MUL {
+                        a2 *= 1.0 + modifier.value;
+                    }
+                }
+            }
+        }
+
+        a1 * a2
     }
 
     // pub fn remove_block(&mut self, block: &mut Block) {
@@ -43,13 +78,6 @@ impl Player {
     //     let (e, m, f) = block.product;
     //     self.add_block_product(&(-e, -m, -f));
     // }
-
-    pub fn add_block_product(&mut self, product: &(i32, i32, i32)) {
-        let (e, m, f) = product;
-        self.state_resource.add_block_product(cst::ENERGY, *e);
-        self.state_resource.add_block_product(cst::MINERAL, *m);
-        self.state_resource.add_block_product(cst::FOOD, *f);
-    }
 }
 
 impl Dumps for Player {
