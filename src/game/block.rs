@@ -2,7 +2,7 @@ use serde_json::{Value, json};
 
 use crate::{reference::{random_block_env, random_product}, assets::event::Events};
 
-use super::{Dumps, people::People};
+use super::{Dumps, people::People, units::legion::Legion};
 
 pub struct Block {
     pub row: i32,
@@ -13,6 +13,8 @@ pub struct Block {
     pub zoning_set: Vec<i32>,
     pub people: People,
 
+    // 驻扎军团
+    pub legion: Option<Legion>,
     pub product: (f64, f64, f64),
     pub events: Events,
 }   
@@ -28,6 +30,7 @@ impl Block {
             environment: e,
             zoning_set: Vec::new(),
             people: People::new(0, z_width),
+            legion: None,
             product: random_product(e),
             events: Vec::new(),
         }

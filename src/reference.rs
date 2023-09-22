@@ -48,23 +48,6 @@ fn fix_path(filepath: &str) -> PathBuf {
     cursor
 }
 
-// pub fn read_file(filepath: &str) -> String {
-//     let p = fix_path(filepath);
-//     let str_p = p.to_str().unwrap();
-//     let mut file_object = match File::open(&p) {
-//         Ok(f) => f,
-//         Err(e) => panic!("No such file {} exception: {}", str_p, e),
-//     };
-
-//     let mut content = String::new();
-//     match file_object.read_to_string(&mut content) {
-//         Ok(r) => r,
-//         Err(e) => panic!("Error reading file: {}", e),
-//     };
-
-//     content
-// }
-
 pub fn random_block_env() -> i32 {
     let mut rng = rand::thread_rng();
     let v = ENVIRONMENT_TYPES[WI.sample(&mut rng)];

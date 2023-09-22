@@ -34,7 +34,8 @@ impl State {
         b.people.quantity = cst::PLAYER_NEW_BLOCK_PEOPLE;
 
         player.add_block(b);
-
+        player.build_solider(b);
+        
         if self.players.len() == 0 {
             self.admin = name.to_string();
         }

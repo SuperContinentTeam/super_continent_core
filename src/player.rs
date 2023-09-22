@@ -1,9 +1,15 @@
+use std::collections::HashMap;
+
 use serde_json::json;
 
 use crate::{
     assets::{event::Events, EVENTS},
     cst,
-    game::{block::Block, Dumps},
+    game::{
+        block::Block,
+        units::{legion::{Legion, self}, soldier::Soldier},
+        Dumps,
+    },
     reference::AxClient,
 };
 
@@ -15,7 +21,8 @@ pub struct Player {
     pub name: String,
     pub state_resource: StateResource,
     pub blocks: Vec<(i32, i32)>,
-
+    // 军团
+    pub legions: HashMap<String, Legion>,
     pub events: Events,
 }
 
@@ -28,11 +35,27 @@ impl Player {
             state_resource: StateResource::new(),
             blocks: Vec::new(),
             events: Vec::new(),
+            legions: HashMap::new(),
         }
     }
 
     pub fn next(&mut self) {
         self.state_resource.next();
+    }
+
+    pub fn build_solider(&mut self, block: &mut Block) {
+        // 当前地块驻扎有军团 新建士兵加入到该军团
+        if let Some(legion) = block.legion.as_mut() {
+            let code = legion.soliders.len() + 1;
+            let soldier = Soldier::new(code as u64, &self.name, &legion.name, (block.row, block.col));
+            legion.soliders.push(soldier);
+        } else {
+        // 当前地块未驻扎军团 新建士兵后新建军团
+            let name = format!("第{}军团", self.legions.len() + 1);
+            let solider = Soldier::new(0, &self.name, &name, (block.row, block.col));
+            let leigon = Legion::new(&name, solider);
+            block.legion = Some(leigon);
+        }
     }
 
     pub fn add_block(&mut self, block: &mut Block) {

@@ -1,4 +1,3 @@
-
 // pub const BASE: &str = "base";
 pub const BLOCK: &str = "block";
 
@@ -18,5 +17,7 @@ pub const DUMP_PLAYER: &str = "player";
 
 pub const PLAYER_NEW_BLOCK_PEOPLE: i32 = 20;
 
-pub const MODIFIER_METHOD_ADD:&str = "add";
-pub const MODIFIER_METHOD_MUL:&str = "mul";
+pub const MODIFIER_METHOD_ADD: &str = "add";
+pub const MODIFIER_METHOD_MUL: &str = "mul";
+
+pub const UNIT_MAX_LEVEL: u8 = 10;
