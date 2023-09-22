@@ -6,6 +6,7 @@ use lazy_static::lazy_static;
 
 pub mod event;
 pub mod technology;
+pub mod building;
 
 use crate::assets::{event::Modifier, technology::Technology};
 
@@ -15,6 +16,7 @@ lazy_static! {
 }
 
 pub fn parse_all() {
-    println!("初始化事件数: {}", EVENTS.len());
-    println!("初始化科技数: {}", TECHNOLOGIES.len());
+    println!("初始化事件: {}", EVENTS.len());
+    println!("初始化科技: {}", TECHNOLOGIES.len());
+    building::parse_all_building();
 }

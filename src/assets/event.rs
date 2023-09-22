@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::read_to_string};
 
-use crate::{asset_parse::to_tokens, cst, reference::read_file};
+use crate::cst;
 
 pub type Events = Vec<String>;
 #[derive(Debug)]
@@ -12,42 +12,24 @@ pub struct Modifier {
 }
 
 fn parse_event(area: &str) -> HashMap<String, Vec<Modifier>> {
-    let content = read_file(&format!("data/common/events/{}.txt", area));
-    let mut stack: Vec<String> = Vec::new();
-    let mut temp_modifier: HashMap<String, String> = HashMap::new();
     let mut result: HashMap<String, Vec<Modifier>> = HashMap::new();
 
-    for i in to_tokens(&content) {
-        match i.as_str() {
-            "}" => {
-                let name = stack.pop().unwrap();
-                let mut temp: Vec<Modifier> = Vec::new();
-
-                for (code, value) in &temp_modifier {
-                    let cs: Vec<&str> = code.split(":").collect();
-                    let modifier = Modifier {
-                        code: area.to_string(),
-                        entity: cs[0].to_string(),
-                        method: cs[1].to_string(),
-                        value: value.parse::<f64>().unwrap(),
-                    };
-                    temp.push(modifier);
+    let content = read_to_string(&format!("data/common/events/{}.yaml", area)).unwrap();
+    let v: HashMap<String, HashMap<String, f64>> = serde_yaml::from_str(&content).unwrap();
+    for (event_name, modifiers) in v {
+        let ms: Vec<Modifier> = modifiers
+            .iter()
+            .map(|(code, value)| {
+                let c: Vec<&str> = code.split("_").collect();
+                Modifier {
+                    code: area.to_string(),
+                    entity: c[0].to_string(),
+                    method: c[1].to_string(),
+                    value: *value,
                 }
-                
-                result.insert(name, temp);
-                temp_modifier.clear();
-            }
-            ";" => {
-                let temp_value = stack.pop().unwrap();
-                let temp_code = stack.pop().unwrap();
-                
-                temp_modifier.insert(temp_code, temp_value);
-            }
-            "{" | "=" => {}
-            _ => {
-                stack.push(i);
-            }
-        }
+            })
+            .collect();
+        result.insert(event_name, ms);
     }
 
     result

@@ -1,0 +1,19 @@
+env_n2:
+    energy_mul: -0.5
+    mineral_mul: -0.5
+    food_mul: -0.5
+
+env_n1:
+    energy_mul: -0.2
+    mineral_mul: -0.2
+    food_mul: -0.2
+
+env_p1:
+    energy_mul: 0.2
+    mineral_mul: 0.2
+    food_mul: 0.2
+
+env_p2:
+    energy_mul: 0.5
+    mineral_mul: 0.5
+    food_mul: 0.5

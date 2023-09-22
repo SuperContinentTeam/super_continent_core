@@ -1,0 +1,9 @@
+outpost:
+    tier: 0
+    tick: 60
+    zoning_need: 1
+    front_techs:
+    front_buildings:
+    materials:
+        energy: 1000
+        mineral: 1000

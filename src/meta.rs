@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::env;
-
-use crate::reference::read_file;
+use std::{env, fs::read_to_string};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Configure {
@@ -18,7 +16,7 @@ pub fn parse_toml_config() -> Configure {
         &args[1]
     };
 
-    let content = read_file(config_file);
+    let content = read_to_string(config_file).unwrap();
     let v: Configure = toml::from_str(&content).unwrap();
 
     v
