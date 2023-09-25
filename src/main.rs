@@ -12,7 +12,6 @@ mod commander;
 mod cst;
 mod game;
 mod meta;
-mod asset_parse;
 mod player;
 mod reference;
 mod state;
