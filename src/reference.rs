@@ -1,4 +1,4 @@
-use crate::{state::State, cst};
+use crate::{cst, state::State};
 use futures_channel::mpsc::UnboundedSender;
 use lazy_static::lazy_static;
 use rand::{distributions::WeightedIndex, prelude::Distribution, Rng};
@@ -94,5 +94,7 @@ pub fn random_product(ev: i32) -> (f64, f64, f64) {
 
 // 人口增长速度公式
 pub fn pop_growth(current_number: f64, max_limit: f64, modifier: f64) -> f64 {
-    modifier * current_number * (1.0 - current_number / max_limit)
+    let ex = (-current_number.powf(2.0)).exp();
+
+    (1.0 + modifier) * cst::DEFAULT_POP_SPEED * (1.0 - ex) * max_limit
 }
