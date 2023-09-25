@@ -19,8 +19,13 @@ impl People {
         }
     }
 
-    // pub fn update(&mut self, modifier: f64) {
-    //     // self.speed = pop_growth(self.quantity as f64, self.max_limit as f64, modifier);
-    //     self.process = 0.0;
-    // }
+    pub fn next(&mut self) {
+        if self.quantity > 0 && self.quantity < self.max_limit {
+            self.process += self.speed;
+            if self.process >= 100.0 {
+                self.quantity += 1;
+                self.process = 0.0;
+            }
+        }
+    }
 }

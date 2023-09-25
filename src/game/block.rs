@@ -41,15 +41,7 @@ impl Block {
     }
 
     pub fn next(&mut self) {
-        if self.people.quantity < self.people.max_limit {
-            self.people.process += self.people.speed;
-            if self.people.process >= 100.0 {
-                self.people.quantity += 1;
-                self.people.process = 0.0;
-                // let m = POPULATION_GROWTH[self.environment as usize + 2];
-                // self.people.update(m);
-            }
-        }
+        self.people.next();
     }
 
     pub fn initial_people(&mut self) {
