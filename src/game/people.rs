@@ -1,4 +1,4 @@
-use crate::reference::pop_growth;
+use crate::cst;
 
 pub struct People {
     pub quantity: i32,
@@ -14,13 +14,13 @@ impl People {
             quantity: 0,
             max_limit: z_width * z_width * 10,
             idle: 0,
-            speed: 0.0,
+            speed: cst::DEFAULT_POP_SPEED,
             process: 0.0,
         }
     }
 
-    pub fn update(&mut self, modifier: f64) {
-        self.speed = pop_growth(self.quantity as f64, self.max_limit as f64, modifier);
-        self.process = 0.0;
-    }
+    // pub fn update(&mut self, modifier: f64) {
+    //     // self.speed = pop_growth(self.quantity as f64, self.max_limit as f64, modifier);
+    //     self.process = 0.0;
+    // }
 }

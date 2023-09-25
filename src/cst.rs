@@ -23,5 +23,5 @@ pub const MODIFIER_METHOD_MUL: &str = "mul";
 pub const UNIT_MAX_LEVEL: u8 = 10;
 // 最低殖民人数
 pub const MIN_COLONIAL: u8 = 10;
-// 默认人口增长速度: 1/300tick
-pub const DEFAULT_POP_SPEED: f64 = 1.0 / 100.0;
+// 默认人口增长速度: 0.33%/tick,
+pub const DEFAULT_POP_SPEED: f64 = 0.33;

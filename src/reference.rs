@@ -93,8 +93,8 @@ pub fn random_product(ev: i32) -> (f64, f64, f64) {
 }
 
 // 人口增长速度公式
-pub fn pop_growth(current_number: f64, max_limit: f64, modifier: f64) -> f64 {
-    let ex = (-current_number.powf(2.0)).exp();
+// pub fn pop_growth(current_number: f64, max_limit: f64, modifier: f64) -> f64 {
+//     let ex = (-current_number.powf(2.0)).exp();
 
-    (1.0 + modifier) * cst::DEFAULT_POP_SPEED * (1.0 - ex) * max_limit
-}
+//     (1.0 + modifier) * cst::DEFAULT_POP_SPEED * (1.0 - ex) * max_limit
+// }

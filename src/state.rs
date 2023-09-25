@@ -2,7 +2,6 @@ use serde_json::{json, Value};
 
 use crate::cst;
 use crate::game::Dumps;
-use crate::game::people::People;
 use crate::reference::{AXState, AxClient, TIME_FLOW};
 use std::collections::HashMap;
 
@@ -35,7 +34,7 @@ impl State {
 
         let b = self.world.blocks.get_mut(&self.world.rand_block()).unwrap();
         b.initial_people();
-        
+
         player.add_block(b);
         player.build_solider(b);
         
