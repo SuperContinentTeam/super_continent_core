@@ -52,6 +52,12 @@ impl World {
         }
     }
 
+    pub fn next(&mut self) {
+        for (_, block) in &mut self.blocks {
+            block.next();
+        }
+    }
+
     fn no_neighbor(&self, r: i32, c: i32) -> bool {
         let neighbors = vec![
             (r - 1, c - 1),

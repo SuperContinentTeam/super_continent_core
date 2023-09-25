@@ -1,8 +1,12 @@
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
-use crate::{reference::{random_block_env, random_product}, assets::event::Events};
+use crate::{
+    assets::event::Events,
+    cst,
+    reference::{pop_growth, random_block_env, random_product, POPULATION_GROWTH},
+};
 
-use super::{Dumps, people::People, units::legion::Legion};
+use super::{people::People, units::legion::Legion, Dumps};
 
 pub struct Block {
     pub row: i32,
@@ -17,7 +21,7 @@ pub struct Block {
     pub legion: Option<Legion>,
     pub product: (f64, f64, f64),
     pub events: Events,
-}   
+}
 
 impl Block {
     pub fn new(row: i32, col: i32, z_width: i32) -> Self {
@@ -29,11 +33,28 @@ impl Block {
             z_width,
             environment: e,
             zoning_set: Vec::new(),
-            people: People::new(0, z_width),
+            people: People::new(z_width),
             legion: None,
             product: random_product(e),
             events: Vec::new(),
         }
+    }
+
+    pub fn next(&mut self) {
+        if self.people.quantity < self.people.max_limit {
+            self.people.process += self.people.speed;
+            if self.people.process >= 100.0 {
+                self.people.quantity += 1;
+                let m = POPULATION_GROWTH[self.environment as usize + 2];
+                self.people.update(m);
+            }
+        }
+    }
+
+    pub fn initial_people(&mut self) {
+        let m = POPULATION_GROWTH[self.environment as usize + 2];
+        self.people.quantity = cst::PLAYER_NEW_BLOCK_PEOPLE;
+        self.people.update(m);
     }
 
     pub fn can_visit(&self, player: &str) -> bool {

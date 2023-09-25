@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs::read_to_string};
 
-use crate::cst;
+use crate::{cst, reference::fix_path};
 
 pub type Events = Vec<String>;
 #[derive(Debug)]
@@ -12,7 +12,8 @@ pub struct Modifier {
 }
 
 fn parse_event(area: &str) -> HashMap<String, Vec<Modifier>> {
-    let content = read_to_string(&format!("data/common/events/{}.yaml", area)).unwrap();
+    let p = fix_path(&format!("data/common/events/{}.yaml", area));
+    let content = read_to_string(p).unwrap();
     let mut v: HashMap<String, HashMap<String, f64>> = serde_yaml::from_str(&content).unwrap();
 
     v.drain()

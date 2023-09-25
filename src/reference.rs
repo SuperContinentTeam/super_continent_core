@@ -1,8 +1,8 @@
-use crate::state::State;
+use crate::{state::State, cst};
 use futures_channel::mpsc::UnboundedSender;
 use lazy_static::lazy_static;
 use rand::{distributions::WeightedIndex, prelude::Distribution, Rng};
-use std::{env, fs::File, io::Read, net::SocketAddr, path::PathBuf, sync::Arc};
+use std::{env, net::SocketAddr, path::PathBuf, sync::Arc};
 use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::protocol::Message;
 
@@ -31,9 +31,11 @@ lazy_static! {
     pub static ref BLOCK_PRODUCT: [String; 4] = ["e".to_string(), "m".to_string(), "f".to_string(), String::new()];
     // 产物权重表
     pub static ref PI: WeightedIndex<i32> = WeightedIndex::new([3, 4, 5, 6].iter()).unwrap();
+    // 地块环境影响人口增长修正
+    pub static ref POPULATION_GROWTH:[f64; 5] = [0.0, 0.03, 0.1, 0.2, 0.3];
 }
 
-fn fix_path(filepath: &str) -> PathBuf {
+pub fn fix_path(filepath: &str) -> PathBuf {
     let ps: Vec<&str> = filepath.split("/").collect();
     let mut cursor = PathBuf::new();
 
@@ -88,4 +90,9 @@ pub fn random_product(ev: i32) -> (f64, f64, f64) {
     let ff = (f as f64) * modifier;
 
     (fe, fm, ff)
+}
+
+// 人口增长速度公式
+pub fn pop_growth(current_number: f64, max_limit: f64, modifier: f64) -> f64 {
+    modifier * current_number * (1.0 - current_number / max_limit)
 }

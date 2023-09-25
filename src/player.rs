@@ -7,10 +7,10 @@ use crate::{
     cst,
     game::{
         block::Block,
-        units::{legion::{Legion, self}, soldier::Soldier},
+        units::{legion::Legion, soldier::Soldier},
         Dumps,
     },
-    reference::AxClient,
+    reference::{AxClient, POPULATION_GROWTH},
 };
 
 use super::game::resource::StateResource;
@@ -47,10 +47,15 @@ impl Player {
         // 当前地块驻扎有军团 新建士兵加入到该军团
         if let Some(legion) = block.legion.as_mut() {
             let code = legion.soliders.len() + 1;
-            let soldier = Soldier::new(code as u64, &self.name, &legion.name, (block.row, block.col));
+            let soldier = Soldier::new(
+                code as u64,
+                &self.name,
+                &legion.name,
+                (block.row, block.col),
+            );
             legion.soliders.push(soldier);
         } else {
-        // 当前地块未驻扎军团 新建士兵后新建军团
+            // 当前地块未驻扎军团 新建士兵后新建军团
             let name = format!("第{}军团", self.legions.len() + 1);
             let solider = Soldier::new(0, &self.name, &name, (block.row, block.col));
             let leigon = Legion::new(&name, solider);

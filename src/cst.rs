@@ -21,3 +21,5 @@ pub const MODIFIER_METHOD_ADD: &str = "add";
 pub const MODIFIER_METHOD_MUL: &str = "mul";
 
 pub const UNIT_MAX_LEVEL: u8 = 10;
+// 最低殖民人数
+pub const MIN_COLONIAL: u8 = 10;

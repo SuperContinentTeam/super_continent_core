@@ -3,7 +3,7 @@ use std::fs::read_to_string;
 
 use serde::{Deserialize, Serialize};
 
-use crate::cst;
+use crate::{cst, reference::fix_path};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Building {
@@ -41,7 +41,8 @@ impl Building {
 }
 
 fn parse_building(area: &str) -> HashMap<String, Building> {
-    let content = read_to_string(&format!("data/common/buildings/{}.yaml", area)).unwrap();
+    let p = fix_path(&format!("data/common/buildings/{}.yaml", area));
+    let content = read_to_string(p).unwrap();
     let mut v: HashMap<String, Temp> = serde_yaml::from_str(&content).unwrap();
 
     v.drain()

@@ -2,6 +2,7 @@ use serde_json::{json, Value};
 
 use crate::cst;
 use crate::game::Dumps;
+use crate::game::people::People;
 use crate::reference::{AXState, AxClient, TIME_FLOW};
 use std::collections::HashMap;
 
@@ -24,6 +25,8 @@ impl State {
         for (_, player) in self.players.iter_mut() {
             player.next();
         }
+        self.world.next();
+
         println!("State Tick: {}", self.tick);
     }
 
@@ -31,8 +34,8 @@ impl State {
         let mut player = Player::new(client, name.to_string());
 
         let b = self.world.blocks.get_mut(&self.world.rand_block()).unwrap();
-        b.people.quantity = cst::PLAYER_NEW_BLOCK_PEOPLE;
-
+        b.initial_people();
+        
         player.add_block(b);
         player.build_solider(b);
         
