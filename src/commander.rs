@@ -1,7 +1,8 @@
 use crate::{
-    assets::tags,
+    assets::{self, tags},
+    processes::technology::TechnologyProcess,
     reference::{AXState, AxClient},
-    ws::send_message,
+    ws::send_message, cst,
 };
 
 pub async fn join_room(client: AxClient, s: AXState, name: &str) {
@@ -64,14 +65,24 @@ pub async fn update_state(client: AxClient, s: AXState, status: &str) {
 pub async fn change_player_tech_rate(client: AxClient, s: AXState, a: &str, b: &str, c: &str) {
     let name = { &client.lock().await.player };
     let mut s = s.lock().await;
-
     let player = s.players.get_mut(name).unwrap();
+
     if !player.has_tag(tags::CHANGE_TECH_RATE) {
         let a: f64 = a.parse().unwrap();
         let b: f64 = b.parse().unwrap();
         let c: f64 = c.parse().unwrap();
         player.tech_process_sot.set_tech_point(a, b, c);
     }
+}
+
+pub async fn study_technology(client: AxClient, s: AXState, tech_name: &str) {
+    let name = { &client.lock().await.player };
+    let mut s = s.lock().await;
+    let player = s.players.get_mut(name).unwrap();
+
+    let tech = &assets::TECHNOLOGIES[tech_name];
+    let tps = TechnologyProcess::new(tech_name.to_string(), tech.clone());
+    player.tech_process_sot.set_technology(tps);
 }
 
 pub async fn bypass_binary(options: &str, client: AxClient, s: AXState) {
@@ -87,6 +98,7 @@ pub async fn bypass_binary(options: &str, client: AxClient, s: AXState) {
         "2" => player_leave(client, s).await,
         "3" => update_state(client, s, cmd[1]).await,
         "4" => change_player_tech_rate(client, s, cmd[1], cmd[2], cmd[3]).await,
+        "5" => study_technology(client, s, cmd[1]).await,
         _ => {}
     }
 }

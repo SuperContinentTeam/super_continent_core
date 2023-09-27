@@ -9,6 +9,10 @@ pub const ALLOY: &str = "alloy";
 pub const TECHNOLOGY: &str = "technology";
 pub const CIVILIAN: &str = "civilian";
 
+pub const TECH_AREA_PHYSIC: &str = "physic";
+pub const TECH_AREA_CIVILIAN: &str = "civilian";
+pub const TECH_AREA_EXTRA: &str = "extraordinary";
+
 pub const DUMP_TICK: &str = "tick";
 pub const DUMP_WORLD: &str = "world";
 pub const DUMP_BLOCK: &str = "blocks";

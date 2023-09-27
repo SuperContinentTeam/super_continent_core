@@ -1,4 +1,4 @@
-use crate::{assets::technology::Technology, game::resource::Resource};
+use crate::{assets::technology::Technology, game::resource::Resource, cst};
 
 use super::Process;
 
@@ -39,6 +39,21 @@ impl TechProcessSolt {
             civilian: None,
             extraordinary: None,
             tech_points: [30.0, 30.0, 40.0],
+        }
+    }
+
+    pub fn set_technology(&mut self, tech_process: TechnologyProcess ) {
+        match tech_process.tech.area.as_str() {
+            cst::TECH_AREA_PHYSIC => {
+                self.physic = Some(tech_process);
+            },
+            cst::TECH_AREA_CIVILIAN => {
+                self.civilian = Some(tech_process);
+            },
+            cst::TECH_AREA_EXTRA => {
+                self.extraordinary = Some(tech_process);
+            }
+            _ => {}
         }
     }
 
