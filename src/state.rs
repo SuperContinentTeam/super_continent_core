@@ -23,6 +23,7 @@ impl State {
         self.tick += 1;
         for (_, player) in self.players.iter_mut() {
             player.next();
+            player.after_next().await;
         }
         self.world.next();
 

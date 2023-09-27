@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde_json::json;
+use serde_json::{json, Value};
 
 use crate::{
     assets::{event::Events, EVENTS, tags::Tag},
@@ -10,7 +10,7 @@ use crate::{
         units::{legion::Legion, soldier::Soldier},
         Dumps,
     },
-    reference::AxClient,
+    reference::AxClient, processes::technology::TechProcessSolt, ws::send_message,
 };
 
 use super::game::resource::StateResource;
@@ -21,7 +21,7 @@ pub struct Player {
     pub name: String,
     pub state_resource: StateResource,
     pub blocks: Vec<(i32, i32)>,
-
+    pub tech_process_sot: TechProcessSolt,
     // 全局修正buff
     pub events: Events,
     // 全局标签
@@ -30,8 +30,7 @@ pub struct Player {
     pub finished_techs: Vec<String>,
     // 军团
     pub legions: HashMap<String, Legion>,
-    // 分配科研重心
-    pub tech_points: [u8; 3],
+
 }
 
 impl Player {
@@ -45,13 +44,14 @@ impl Player {
             events: Vec::new(),
             legions: HashMap::new(),
             finished_techs: Vec::new(),
-            tech_points: [3, 3, 4],
             tags: Vec::new(),
+            tech_process_sot: TechProcessSolt::new(),
         }
     }
 
     pub fn next(&mut self) {
         self.state_resource.next();
+        self.tech_process_sot.next(self.state_resource.resource_map.get_mut(cst::TECHNOLOGY).unwrap());
 
         for tag in &mut self.tags {
             tag.next();
@@ -116,8 +116,6 @@ impl Player {
         a1 * a2
     }
 
-    pub fn set_tech_point(&mut self, a: u8, b: u8, c: u8) {}
-
     pub fn has_tag(&self, name: &str) -> bool {
         for tag in &self.tags {
             if tag.name == name {
@@ -126,6 +124,15 @@ impl Player {
         }
 
         false
+    }
+
+    pub async fn after_next(&mut self) {
+        let mut message: HashMap<String, Value> = HashMap::new();
+        if let Some(techs) = self.tech_process_sot.check_finish(){
+            message.insert("finished_tech".to_string(), json!(techs));
+        }
+
+        send_message(json!(message).to_string(), self.client.clone()).await;
     }
 
     // pub fn remove_block(&mut self, block: &mut Block) {

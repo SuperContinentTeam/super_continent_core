@@ -67,10 +67,10 @@ pub async fn change_player_tech_rate(client: AxClient, s: AXState, a: &str, b: &
 
     let player = s.players.get_mut(name).unwrap();
     if !player.has_tag(tags::CHANGE_TECH_RATE) {
-        let a: u8 = a.parse().unwrap();
-        let b: u8 = b.parse().unwrap();
-        let c: u8 = c.parse().unwrap();
-        player.set_tech_point(a, b, c);
+        let a: f64 = a.parse().unwrap();
+        let b: f64 = b.parse().unwrap();
+        let c: f64 = c.parse().unwrap();
+        player.tech_process_sot.set_tech_point(a, b, c);
     }
 }
 
