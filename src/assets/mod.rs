@@ -5,6 +5,7 @@ use lazy_static::lazy_static;
 pub mod building;
 pub mod event;
 pub mod technology;
+pub mod tags;
 
 use crate::assets::{event::Modifier, technology::Technology};
 

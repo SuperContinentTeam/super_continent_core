@@ -3,7 +3,7 @@ use serde_json::{json, Value};
 use crate::{
     assets::event::Events,
     cst,
-    reference::{random_block_env, random_product, POPULATION_GROWTH},
+    reference::{random_block_env, random_product},
 };
 
 use super::{people::People, units::legion::Legion, Dumps};

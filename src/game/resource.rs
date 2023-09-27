@@ -46,8 +46,8 @@ impl Resource {
 impl Dumps for Resource {
     fn dumps(&self, _player: &str) -> Value {
         json!({
-            "storage": self.storage,
-            "daily": self.daily,
+            "storage": self.storage.round(),
+            "daily": self.daily.round(),
             // "projects": self.projects
         })
     }

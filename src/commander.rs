@@ -1,4 +1,5 @@
 use crate::{
+    assets::tags,
     reference::{AXState, AxClient},
     ws::send_message,
 };
@@ -60,6 +61,19 @@ pub async fn update_state(client: AxClient, s: AXState, status: &str) {
     }
 }
 
+pub async fn change_player_tech_rate(client: AxClient, s: AXState, a: &str, b: &str, c: &str) {
+    let name = { &client.lock().await.player };
+    let mut s = s.lock().await;
+
+    let player = s.players.get_mut(name).unwrap();
+    if !player.has_tag(tags::CHANGE_TECH_RATE) {
+        let a: u8 = a.parse().unwrap();
+        let b: u8 = b.parse().unwrap();
+        let c: u8 = c.parse().unwrap();
+        player.set_tech_point(a, b, c);
+    }
+}
+
 pub async fn bypass_binary(options: &str, client: AxClient, s: AXState) {
     let cmd = options.split(";").collect::<Vec<&str>>();
     println!("{:?}", cmd);
@@ -72,6 +86,7 @@ pub async fn bypass_binary(options: &str, client: AxClient, s: AXState) {
         "1" => ready(client, s, cmd[1]).await,
         "2" => player_leave(client, s).await,
         "3" => update_state(client, s, cmd[1]).await,
+        "4" => change_player_tech_rate(client, s, cmd[1], cmd[2], cmd[3]).await,
         _ => {}
     }
 }

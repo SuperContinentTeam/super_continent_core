@@ -1,10 +1,8 @@
-use std::result;
-
 use rand::Rng;
 
 use super::{
     unit_cst::{SOLDIER_ATTACK_SPEED, SOLDIER_KINETIC_ATTACK, SOLDIER_MAX_WEIGHT},
-    UnitMeta, SOLDIERS,
+    UnitMeta,
 };
 // 攻击
 pub struct Attack {
@@ -28,7 +26,7 @@ impl Defense {
     }
 
     pub fn get_exemption(&self, c: f64) -> (f64, f64) {
-        let k  = self.kinetic / (c + self.kinetic);
+        let k = self.kinetic / (c + self.kinetic);
         let e = self.energy / (c + self.energy);
         (k, e)
     }
@@ -36,6 +34,7 @@ impl Defense {
 
 // 士兵
 pub struct Soldier {
+    pub tier: u8,
     pub meta: UnitMeta,
     pub legion: String,
     // 负重 (kg)
@@ -48,8 +47,9 @@ pub struct Soldier {
 }
 
 impl Soldier {
-    pub fn new(code: u64, player: &str, legion: &str, station: (i32, i32)) -> Self {
+    pub fn default(code: u64, player: &str, legion: &str, station: (i32, i32)) -> Self {
         Self {
+            tier: 1,
             meta: UnitMeta::new(code, player, station),
             legion: legion.to_string(),
             weight: 0.0,
@@ -96,6 +96,9 @@ impl Soldier {
         let quantify_damage_power = self.attack.energy + self.attack.kinetic;
         let quantity_defense = self.get_exemption();
 
-        self.meta.health * (1.0 - quantity_defense.0) * (1.0 - quantity_defense.1) * quantify_damage_power
+        self.meta.health
+            * (1.0 - quantity_defense.0)
+            * (1.0 - quantity_defense.1)
+            * quantify_damage_power
     }
 }

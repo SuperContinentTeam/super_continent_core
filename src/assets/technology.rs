@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{cst, reference::fix_path};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Technology {
     pub area: String,
     pub tier: u8,

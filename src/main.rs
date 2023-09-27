@@ -13,6 +13,7 @@ mod cst;
 mod game;
 mod meta;
 mod player;
+mod processes;
 mod reference;
 mod state;
 mod ws;
