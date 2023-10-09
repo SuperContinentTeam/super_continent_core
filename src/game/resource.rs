@@ -65,7 +65,7 @@ impl StateResource {
         x.insert(cst::MINERAL.to_string(), Resource::new(1000.0, 10.0));
         x.insert(cst::FOOD.to_string(), Resource::new(1000.0, 10.0));
         x.insert(cst::ALLOY.to_string(), Resource::new(500.0, 5.0));
-        x.insert(cst::CUSTOMER.to_string(), Resource::new(500.0, 5.0));
+        x.insert(cst::COMMODITY.to_string(), Resource::new(500.0, 5.0));
         x.insert(cst::TECHNOLOGY.to_string(), Resource::new(300.0, 3.0));
 
         Self { resource_map: x }
