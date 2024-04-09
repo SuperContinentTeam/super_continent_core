@@ -1,9 +1,9 @@
-outpost:
-    tier: 0
-    tick: 60
-    zoning_need: 1
-    front_techs:
-    front_buildings:
-    materials:
-        energy: 1000
-        mineral: 1000
+outpost: # 建筑名
+  tier: 0 # 等级
+  tick: 60 # 耗时
+  zoning_need: 1 # 区划消耗
+  front_techs: # 前置科技
+  front_buildings: # 前置建筑
+  materials: # 基础资源
+    energy: 1000
+    mineral: 1000

@@ -1,7 +1,7 @@
-env_n2:
-    energy_mul: -0.5
-    mineral_mul: -0.5
-    food_mul: -0.5
+env_n2: # 事件名
+    energy_mul: -0.5 # 能量 x50%
+    mineral_mul: -0.5 # 矿物 x50%
+    food_mul: -0.5 # 食物 x50
 
 env_n1:
     energy_mul: -0.2

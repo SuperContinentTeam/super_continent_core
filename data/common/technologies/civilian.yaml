@@ -1,6 +1,6 @@
-cast_stell:
-  tier: 0
-  cost: 300
+cast_stell: # 科技名
+  tier: 0 # 科技等级
+  cost: 300 # 科技消耗
 
 water_wheel:
   tier: 0
